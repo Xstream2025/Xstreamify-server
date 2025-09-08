@@ -1,6 +1,6 @@
-import app from './js/app.js'
+// index.js (entry point of the app)
 
-const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
-  console.log(`http://localhost:${PORT}`)
-})
+const app = require('./js/app');
+
+// Export the app (useful if testing)
+module.exports = app;

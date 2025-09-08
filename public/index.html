@@ -1,173 +1,375 @@
-<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>My Movies</title>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>X-Streamify</title>
+  <meta name="description" content="Your Movies. Your Stream. Anytime." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27><rect width=%27100%27 height=%27100%27 fill=%27%23000%27/><text x=%2750%25%27 y=%2758%25%27 font-size=%2770%27 text-anchor=%27middle%27 fill=%27%23e11%27>X</text></svg>">
+
+  <!-- Tailwind (CDN mode so you don't need a build step for this file) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#E50914',
+              dark: '#B0060F',
+              light: '#FF4D55'
+            }
+          },
+          boxShadow: {
+            glow: '0 0 30px rgba(229,9,20,0.25)'
+          },
+          backgroundImage: {
+            'grid-fade': 'radial-gradient(1200px 500px at 50% -20%, rgba(229,9,20,.20), transparent 60%)'
+          }
+        }
+      }
+    }
+  </script>
+
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 40px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: end; }
-    input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
-    button { padding: 10px 14px; border-radius: 10px; border: 0; background: black; color: white; cursor: pointer; }
-    button.secondary { background: #666; }
-    button.danger { background: #b00020; }
-    .muted { color: #666; }
-    .item { display:flex; gap:8px; align-items:center; margin: 8px 0; }
-    .pill { font-size: 11px; padding: 2px 8px; border: 1px solid #aaa; border-radius: 999px; }
+    /* Subtle grain for cinematic feel */
+    .grain:before{
+      content:"";
+      position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGPw+A8AAoMBi0sQ9gAAAABJRU5ErkJggg==');
+      opacity:.2;
+      mix-blend-mode:overlay;
+    }
+    /* Card image pan on hover */
+    .card-img { transition: transform .6s ease; }
+    .card:hover .card-img { transform: scale(1.06); }
+    /* Smooth fade-in */
+    .fade-in { animation: fade .6s ease both; }
+    @keyframes fade { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:translateY(0)} }
   </style>
 </head>
-<body>
-  <h1>My Movies</h1>
 
-  <div class="row" style="margin-bottom:12px;">
-    <div>
-      <label for="q" class="muted">Search</label>
-      <input id="q" placeholder="title or notes…">
-    </div>
-    <div>
-      <label for="filterType" class="muted">Type</label>
-      <select id="filterType">
-        <option value="">All</option>
-        <option value="DVD">DVD</option>
-        <option value="BLURAY">Blu-ray</option>
-        <option value="DIGITAL">Digital</option>
-      </select>
-    </div>
-    <div>
-      <label for="sort" class="muted">Sort</label>
-      <select id="sort">
-        <option value="new">Newest</option>
-        <option value="old">Oldest</option>
-        <option value="title">Title A–Z</option>
-      </select>
-    </div>
-    <div style="display:flex; gap:6px;">
-      <button id="apply">Apply</button>
-      <button id="clear" class="secondary">Clear</button>
-    </div>
-  </div>
+<body class="grain min-h-dvh bg-black text-white selection:bg-brand/40">
+  <!-- Top gradient wash -->
+  <div class="pointer-events-none absolute inset-0 bg-grid-fade"></div>
 
-  <form id="createForm" style="display:grid; grid-template-columns: 1fr 160px 1fr auto; gap:8px; margin-bottom:12px;">
-    <input id="title" placeholder="New movie title" required />
-    <select id="discType">
-      <option value="DVD">DVD</option>
-      <option value="BLURAY">Blu-ray</option>
-      <option value="DIGITAL">Digital</option>
-    </select>
-    <input id="notes" placeholder="Notes (optional)" />
-    <button id="submitBtn" type="submit">Add</button>
-  </form>
+  <!-- Header -->
+  <header class="relative z-10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="h-9 w-9 grid place-items-center rounded-xl bg-brand shadow-glow group-hover:scale-105 transition">
+          <span class="font-black text-xl">X</span>
+        </div>
+        <div class="leading-tight">
+          <div class="text-xl font-bold tracking-tight">X-Streamify</div>
+          <div class="text-[11px] text-white/60 -mt-0.5">Your Movies. Your Stream. Anytime.</div>
+        </div>
+      </a>
 
-  <div id="list" class="muted">Loading…</div>
+      <nav class="hidden md:flex items-center gap-6 text-sm">
+        <a href="#featured" class="hover:text-brand">Featured</a>
+        <a href="#library" class="hover:text-brand">My Library</a>
+        <a href="#how" class="hover:text-brand">How It Works</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <a href="#add" class="inline-flex items-center rounded-xl bg-brand px-4 py-2 text-sm font-semibold hover:bg-brand-dark active:scale-[.98] transition">
+          Add Movies
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="relative z-10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
+      <div class="grid lg:grid-cols-2 gap-8 items-center">
+        <div class="fade-in">
+          <h1 class="text-4xl sm:text-5xl font-black leading-tight">
+            Build your personal <span class="text-brand">streaming library</span>.
+          </h1>
+          <p class="mt-4 text-white/80">
+            Import your discs and files once — stream them anywhere, anytime. No rentals. No re-buys. Your collection, your rules.
+          </p>
+
+          <!-- Search bar -->
+          <form class="mt-6 flex gap-2" onsubmit="event.preventDefault(); alert('Search coming soon.');">
+            <input class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-brand placeholder:text-white/40"
+                   placeholder="Search your library…" />
+            <button class="rounded-xl bg-brand px-4 py-3 font-semibold hover:bg-brand-dark">Search</button>
+          </form>
+
+          <!-- Quick links -->
+          <div class="mt-4 flex flex-wrap gap-3 text-sm">
+            <a href="#library" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10">Open Library</a>
+            <a href="#add" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10">Add a New Movie</a>
+            <a href="#how" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10">How It Works</a>
+          </div>
+        </div>
+
+        <!-- Hero Preview -->
+        <div class="fade-in lg:justify-self-end w-full max-w-[560px]">
+          <div class="rounded-2xl overflow-hidden border border-white/10 bg-white/5 shadow-glow">
+            <img class="w-full aspect-video object-cover"
+                 src="https://picsum.photos/960/540?random=12"
+                 alt="Cinematic preview" />
+          </div>
+          <div class="mt-3 text-xs text-white/50">Replace with your hero artwork later.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured “3 picture titles” -->
+  <section id="featured" class="relative z-10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex items-end justify-between">
+        <h2 class="text-xl font-semibold">Featured</h2>
+        <a href="#library" class="text-sm text-white/60 hover:text-white">View all</a>
+      </div>
+
+      <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Card 1 -->
+        <a href="#play/feature-a" class="card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          <img class="card-img w-full aspect-[16/9] object-cover"
+               src="https://picsum.photos/960/540?random=101" alt="Feature A">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-4">
+            <div class="text-lg font-semibold">Feature A</div>
+            <div class="text-xs text-white/70">Sci-Fi • 2h 11m</div>
+          </div>
+        </a>
+
+        <!-- Card 2 -->
+        <a href="#play/feature-b" class="card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          <img class="card-img w-full aspect-[16/9] object-cover"
+               src="https://picsum.photos/960/540?random=102" alt="Feature B">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-4">
+            <div class="text-lg font-semibold">Feature B</div>
+            <div class="text-xs text-white/70">Drama • 1h 54m</div>
+          </div>
+        </a>
+
+        <!-- Card 3 -->
+        <a href="#play/feature-c" class="card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          <img class="card-img w-full aspect-[16/9] object-cover"
+               src="https://picsum.photos/960/540?random=103" alt="Feature C">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-4">
+            <div class="text-lg font-semibold">Feature C</div>
+            <div class="text-xs text-white/70">Action • 2h 03m</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Library teaser -->
+  <section id="library" class="relative z-10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+      <h2 class="text-xl font-semibold">My Library</h2>
+      <p class="mt-2 text-white/70 text-sm">When you add movies, they’ll appear here in rows and categories.</p>
+
+      <div class="mt-5 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        <!-- Placeholder tiles -->
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="relative z-10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+      <h2 class="text-xl font-semibold">How It Works</h2>
+      <ol class="mt-3 space-y-3 text-sm text-white/80">
+        <li>1) Click <span class="font-semibold text-white">Add Movies</span> to start.</li>
+        <li>2) Choose from “Import Disc” or “Upload File”.</li>
+        <li>3) Your titles appear in <span class="font-semibold text-white">My Library</span> and play instantly on any device.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Add -->
+  <section id="add" class="relative z-10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <h3 class="text-lg font-semibold">Add a New Movie</h3>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <button onclick="alert('Import Disc flow coming soon.')"
+                  class="rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 px-4 py-3 text-left">
+            <div class="font-semibold">Import Disc</div>
+            <div class="text-xs text-white/60">Insert your DVD/Blu-ray and follow the prompts.</div>
+          </button>
+          <button onclick="alert('Upload File flow coming soon.')"
+                  class="rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 px-4 py-3 text-left">
+            <div class="font-semibold">Upload File</div>
+            <div class="text-xs text-white/60">Add a local file or from your drive.</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEW: Vault Tabs Section (Movies • Docs • Pictures) -->
+  <section id="vault" class="relative z-10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-semibold">Your Vault</h2>
+      </div>
+
+      <!-- Tabs -->
+      <div class="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Content types">
+        <button class="vault-tab rounded-xl px-4 py-2 text-sm border border-white/10 bg-white/10"
+                data-tab="movies" aria-selected="true" role="tab">Movies</button>
+        <button class="vault-tab rounded-xl px-4 py-2 text-sm border border-white/10 bg-white/5"
+                data-tab="docs" role="tab">Docs</button>
+        <button class="vault-tab rounded-xl px-4 py-2 text-sm border border-white/10 bg-white/5"
+                data-tab="pictures" role="tab">Pictures</button>
+      </div>
+
+      <!-- Panels -->
+      <div class="mt-6 space-y-6">
+
+        <!-- Panel: Movies -->
+        <div class="vault-panel" data-panel="movies" role="tabpanel">
+          <div class="grid gap-6 lg:grid-cols-[220px,1fr]">
+            <!-- Subfolders -->
+            <aside class="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <div class="text-xs uppercase tracking-wide text-white/50 mb-2">Folders</div>
+              <nav class="grid">
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="All">All</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="By Genre">By Genre</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Recently Added">Recently Added</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Favorites">Favorites</button>
+              </nav>
+            </aside>
+
+            <!-- Content -->
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="flex items-center justify-between">
+                <div class="text-sm text-white/70">Movies / <span class="sub-label">All</span></div>
+                <a href="#add" class="text-sm hover:text-brand">+ Add</a>
+              </div>
+              <div class="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel: Docs -->
+        <div class="vault-panel hidden" data-panel="docs" role="tabpanel">
+          <div class="grid gap-6 lg:grid-cols-[220px,1fr]">
+            <aside class="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <div class="text-xs uppercase tracking-wide text-white/50 mb-2">Folders</div>
+              <nav class="grid">
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="All">All</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="PDFs">PDFs</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Word">Word</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Spreadsheets">Spreadsheets</button>
+              </nav>
+            </aside>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="flex items-center justify-between">
+                <div class="text-sm text-white/70">Docs / <span class="sub-label">All</span></div>
+                <a href="#add" class="text-sm hover:text-brand">+ Upload</a>
+              </div>
+              <div class="mt-4 divide-y divide-white/10">
+                <div class="flex items-center justify-between py-3">
+                  <div class="text-sm">Proposal.pdf</div><div class="text-xs text-white/50">1.2 MB</div>
+                </div>
+                <div class="flex items-center justify-between py-3">
+                  <div class="text-sm">Meeting Notes.docx</div><div class="text-xs text-white/50">84 KB</div>
+                </div>
+                <div class="flex items-center justify-between py-3">
+                  <div class="text-sm">Budget.xlsx</div><div class="text-xs text-white/50">212 KB</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel: Pictures -->
+        <div class="vault-panel hidden" data-panel="pictures" role="tabpanel">
+          <div class="grid gap-6 lg:grid-cols-[220px,1fr]">
+            <aside class="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <div class="text-xs uppercase tracking-wide text-white/50 mb-2">Folders</div>
+              <nav class="grid">
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="All">All</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Albums">Albums</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Camera Roll">Camera Roll</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Favorites">Favorites</button>
+              </nav>
+            </aside>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="flex items-center justify-between">
+                <div class="text-sm text-white/70">Pictures / <span class="sub-label">All</span></div>
+                <a href="#add" class="text-sm hover:text-brand">+ Upload</a>
+              </div>
+              <div class="mt-4 grid gap-3 grid-cols-3 sm:grid-cols-4 md:grid-cols-6">
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- /space-y-6 -->
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="relative z-10 border-t border-white/10 bg-black/60">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 text-xs text-white/60">
+      © <span id="y"></span> X-Streamify. All rights reserved.
+    </div>
+  </footer>
 
   <script>
-    const list = document.getElementById('list');
-    const form = document.getElementById('createForm');
-    const titleEl = document.getElementById('title');
-    const discTypeEl = document.getElementById('discType');
-    const notesEl = document.getElementById('notes');
-    const qEl = document.getElementById('q');
-    const filterTypeEl = document.getElementById('filterType');
-    const sortEl = document.getElementById('sort');
-    const applyBtn = document.getElementById('apply');
-    const clearBtn = document.getElementById('clear');
+    // Year
+    document.getElementById('y').textContent = new Date().getFullYear();
 
-    function esc(str) {
-      return (str || '').toString()
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
+    // Tabs
+    const tabs = document.querySelectorAll('.vault-tab');
+    const panels = document.querySelectorAll('.vault-panel');
 
-    function qs(params) {
-      const usp = new URLSearchParams(params);
-      return usp.toString() ? '?' + usp.toString() : '';
-    }
-
-    async function fetchMovies() {
-      try {
-        list.textContent = 'Loading…';
-        const q = qEl.value.trim();
-        const type = filterTypeEl.value;
-        const sort = sortEl.value;
-        const res = await fetch('/api/movies' + qs({ q, type, sort }), { cache: 'no-store' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || 'Failed to load');
-        renderList(data);
-      } catch (e) {
-        console.error(e);
-        list.textContent = e.message || 'Error';
-      }
-    }
-
-    function renderList(items) {
-      if (!items.length) { list.textContent = 'No movies found.'; return; }
-      list.innerHTML = '';
-      for (const m of items) {
-        const row = document.createElement('div');
-        row.className = 'item';
-        row.innerHTML = `
-          <div style="flex:1">
-            <strong>${esc(m.title)}</strong> <span class="pill">${esc(m.discType)}</span>
-            ${m.notes ? `<span class="muted">- ${esc(m.notes)}</span>` : ''}
-            <div class="muted" style="font-size:12px;">Added ${new Date(m.createdAt).toLocaleString()}</div>
-          </div>
-          <button data-act="edit">Edit</button>
-          <button data-act="del" class="danger">Delete</button>
-        `;
-        row.querySelector('[data-act="del"]').onclick = () => deleteMovie(m.id);
-        row.querySelector('[data-act="edit"]').onclick = () => editMovie(m);
-        list.appendChild(row);
-      }
-    }
-
-    async function deleteMovie(id) {
-      if (!confirm('Delete this movie?')) return;
-      const res = await fetch('/api/movies/' + id, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok) { alert(data?.error || 'Delete failed'); return; }
-      fetchMovies();
-    }
-
-    async function editMovie(m) {
-      const newTitle = prompt('Title', m.title);
-      if (newTitle === null) return;
-      const newType = prompt('Disc Type (DVD, BLURAY, DIGITAL)', m.discType);
-      if (newType === null) return;
-      const newNotes = prompt('Notes (blank to clear)', m.notes || '');
-      if (newNotes === null) return;
-
-      const res = await fetch('/api/movies/' + m.id, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle, discType: newType, notes: newNotes })
+    function showPanel(name) {
+      panels.forEach(p => {
+        p.classList.toggle('hidden', p.dataset.panel !== name);
       });
-      const data = await res.json();
-      if (!res.ok) { alert(data?.error || 'Update failed'); return; }
-      fetchMovies();
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const res = await fetch('/api/movies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: titleEl.value,
-          discType: discTypeEl.value,
-          notes: notesEl.value
-        }),
+      tabs.forEach(t => {
+        const active = t.dataset.tab === name;
+        t.setAttribute('aria-selected', active ? 'true' : 'false');
+        t.classList.toggle('bg-white/10', active);
+        t.classList.toggle('bg-white/5', !active);
       });
-      const data = await res.json();
-      if (!res.ok) { alert(data?.error || 'Create failed'); return; }
-      titleEl.value = ''; notesEl.value = ''; discTypeEl.value = 'DVD';
-      fetchMovies();
+    }
+    tabs.forEach(t => t.addEventListener('click', () => showPanel(t.dataset.tab)));
+
+    // Subfolder labels inside each panel
+    document.querySelectorAll('.vault-panel').forEach(panel => {
+      const label = panel.querySelector('.sub-label');
+      panel.querySelectorAll('.sub-link').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (label) label.textContent = btn.dataset.sub || btn.textContent.trim();
+        });
+      });
     });
-
-    applyBtn.onclick = fetchMovies;
-    clearBtn.onclick = () => { qEl.value = ''; filterTypeEl.value=''; sortEl.value='new'; fetchMovies(); };
-
-    fetchMovies();
   </script>
 </body>
 </html>

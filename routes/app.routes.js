@@ -4,7 +4,7 @@ const router = express.Router();
 
 // Health endpoints
 router.get('/status', (_req, res) => {
-  res.json({ ok: true, app: 'Xstreamify', version: '0.1.0', time: new Date().toISOString() });
+  res.json({ ok: true, app: 'X-Streamify', version: '0.1.0', time: new Date().toISOString() });
 });
 
 router.get('/ping', (_req, res) => {
