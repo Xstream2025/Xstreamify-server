@@ -1,11 +1,19 @@
-// routes/movies.routes.js
-const express = require('express');
-const router = express.Router();
+import { Router } from 'express'
+import {
+  listMovies,
+  getMovie,
+  createMovie,
+  updateMovie,
+  deleteMovie
+} from '../controllers/movies.controller.js'
 
-// IMPORTANT: one level up to the controllers folder, then the file.
-const ctrl = require('../controllers/movies.controller');
+const router = Router()
 
-router.get('/movies', ctrl.list);
-router.get('/movies/:id', ctrl.get);
+router.get('/',       listMovies)     // GET /api/movies
+router.get('/search', listMovies)     // GET /api/movies/search?q=term
+router.get('/:id',    getMovie)       // GET /api/movies/1
+router.post('/',      createMovie)    // POST /api/movies
+router.put('/:id',    updateMovie)    // PUT /api/movies/1
+router.delete('/:id', deleteMovie)    // DELETE /api/movies/1
 
-module.exports = router;
+export default router

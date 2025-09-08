@@ -2,43 +2,172 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Xstreamify</title>
+  <title>My Movies</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    body { margin: 24px; background:#fafafa; color:#111; }
-    h1 { margin: 0 0 8px; }
-    .muted { color:#666; margin: 0 0 16px; }
-    .row { display:flex; gap:8px; flex-wrap: wrap; margin-bottom:12px; }
-    button { padding:8px 12px; border:1px solid #ddd; background:#fff; border-radius:8px; cursor:pointer; }
-    button:hover { background:#f3f3f3; }
-    input { padding:8px 10px; border:1px solid #ddd; border-radius:8px; }
-    pre { background:#111; color:#e6ffed; padding:16px; border-radius:10px; overflow:auto; min-height:120px; }
-    .card { background:#fff; padding:16px; border:1px solid #eee; border-radius:12px; max-width:900px; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 40px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: end; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    button { padding: 10px 14px; border-radius: 10px; border: 0; background: black; color: white; cursor: pointer; }
+    button.secondary { background: #666; }
+    button.danger { background: #b00020; }
+    .muted { color: #666; }
+    .item { display:flex; gap:8px; align-items:center; margin: 8px 0; }
+    .pill { font-size: 11px; padding: 2px 8px; border: 1px solid #aaa; border-radius: 999px; }
   </style>
 </head>
 <body>
-  <h1>🎬 Xstreamify</h1>
-  <p class="muted">Platform setup complete. Click the buttons to call your API.</p>
+  <h1>My Movies</h1>
 
-  <div class="card">
-    <h3>API health</h3>
-    <div class="row">
-      <button id="btnStatus">Check /api/status</button>
-      <button id="btnPing">Ping /api/ping</button>
+  <div class="row" style="margin-bottom:12px;">
+    <div>
+      <label for="q" class="muted">Search</label>
+      <input id="q" placeholder="title or notes…">
     </div>
-
-    <h3>Movies</h3>
-    <div class="row">
-      <button id="btnMovies">List /api/movies</button>
-      <input id="movieId" placeholder="movie id e.g. 123" />
-      <button id="btnMovieById">Get /api/movies/:id</button>
+    <div>
+      <label for="filterType" class="muted">Type</label>
+      <select id="filterType">
+        <option value="">All</option>
+        <option value="DVD">DVD</option>
+        <option value="BLURAY">Blu-ray</option>
+        <option value="DIGITAL">Digital</option>
+      </select>
     </div>
-
-    <h3>Response</h3>
-    <pre id="output">{ "hint": "Click any button above" }</pre>
+    <div>
+      <label for="sort" class="muted">Sort</label>
+      <select id="sort">
+        <option value="new">Newest</option>
+        <option value="old">Oldest</option>
+        <option value="title">Title A–Z</option>
+      </select>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button id="apply">Apply</button>
+      <button id="clear" class="secondary">Clear</button>
+    </div>
   </div>
 
-  <script src="/js/app.js"></script>
+  <form id="createForm" style="display:grid; grid-template-columns: 1fr 160px 1fr auto; gap:8px; margin-bottom:12px;">
+    <input id="title" placeholder="New movie title" required />
+    <select id="discType">
+      <option value="DVD">DVD</option>
+      <option value="BLURAY">Blu-ray</option>
+      <option value="DIGITAL">Digital</option>
+    </select>
+    <input id="notes" placeholder="Notes (optional)" />
+    <button id="submitBtn" type="submit">Add</button>
+  </form>
+
+  <div id="list" class="muted">Loading…</div>
+
+  <script>
+    const list = document.getElementById('list');
+    const form = document.getElementById('createForm');
+    const titleEl = document.getElementById('title');
+    const discTypeEl = document.getElementById('discType');
+    const notesEl = document.getElementById('notes');
+    const qEl = document.getElementById('q');
+    const filterTypeEl = document.getElementById('filterType');
+    const sortEl = document.getElementById('sort');
+    const applyBtn = document.getElementById('apply');
+    const clearBtn = document.getElementById('clear');
+
+    function esc(str) {
+      return (str || '').toString()
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function qs(params) {
+      const usp = new URLSearchParams(params);
+      return usp.toString() ? '?' + usp.toString() : '';
+    }
+
+    async function fetchMovies() {
+      try {
+        list.textContent = 'Loading…';
+        const q = qEl.value.trim();
+        const type = filterTypeEl.value;
+        const sort = sortEl.value;
+        const res = await fetch('/api/movies' + qs({ q, type, sort }), { cache: 'no-store' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Failed to load');
+        renderList(data);
+      } catch (e) {
+        console.error(e);
+        list.textContent = e.message || 'Error';
+      }
+    }
+
+    function renderList(items) {
+      if (!items.length) { list.textContent = 'No movies found.'; return; }
+      list.innerHTML = '';
+      for (const m of items) {
+        const row = document.createElement('div');
+        row.className = 'item';
+        row.innerHTML = `
+          <div style="flex:1">
+            <strong>${esc(m.title)}</strong> <span class="pill">${esc(m.discType)}</span>
+            ${m.notes ? `<span class="muted">- ${esc(m.notes)}</span>` : ''}
+            <div class="muted" style="font-size:12px;">Added ${new Date(m.createdAt).toLocaleString()}</div>
+          </div>
+          <button data-act="edit">Edit</button>
+          <button data-act="del" class="danger">Delete</button>
+        `;
+        row.querySelector('[data-act="del"]').onclick = () => deleteMovie(m.id);
+        row.querySelector('[data-act="edit"]').onclick = () => editMovie(m);
+        list.appendChild(row);
+      }
+    }
+
+    async function deleteMovie(id) {
+      if (!confirm('Delete this movie?')) return;
+      const res = await fetch('/api/movies/' + id, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) { alert(data?.error || 'Delete failed'); return; }
+      fetchMovies();
+    }
+
+    async function editMovie(m) {
+      const newTitle = prompt('Title', m.title);
+      if (newTitle === null) return;
+      const newType = prompt('Disc Type (DVD, BLURAY, DIGITAL)', m.discType);
+      if (newType === null) return;
+      const newNotes = prompt('Notes (blank to clear)', m.notes || '');
+      if (newNotes === null) return;
+
+      const res = await fetch('/api/movies/' + m.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle, discType: newType, notes: newNotes })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data?.error || 'Update failed'); return; }
+      fetchMovies();
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch('/api/movies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: titleEl.value,
+          discType: discTypeEl.value,
+          notes: notesEl.value
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data?.error || 'Create failed'); return; }
+      titleEl.value = ''; notesEl.value = ''; discTypeEl.value = 'DVD';
+      fetchMovies();
+    });
+
+    applyBtn.onclick = fetchMovies;
+    clearBtn.onclick = () => { qEl.value = ''; filterTypeEl.value=''; sortEl.value='new'; fetchMovies(); };
+
+    fetchMovies();
+  </script>
 </body>
 </html>

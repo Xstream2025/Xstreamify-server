@@ -1,18 +1,20 @@
 // routes/app.routes.js
 const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/app.controller');
 
-// health check (already working)
-router.get('/status', (req, res) => {
+// Health endpoints
+router.get('/status', (_req, res) => {
   res.json({ ok: true, app: 'Xstreamify', version: '0.1.0', time: new Date().toISOString() });
 });
 
-router.get('/info', (req, res) => {
-  res.json({ name: 'Xstreamify', version: '0.1.0' });
+router.get('/ping', (_req, res) => {
+  res.json({ ok: true, message: 'pong', at: new Date().toISOString() });
 });
 
-// NEW: /api/ping
-router.get('/ping', controller.ping);
+// (Optional) quick error test during dev
+// Hit /api/error to see the centralized error handler in action
+router.get('/error', (_req, _res) => {
+  throw new Error('Dev test error');
+});
 
 module.exports = router;
