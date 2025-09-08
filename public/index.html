@@ -13,18 +13,9 @@
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            brand: { DEFAULT: '#E50914', dark: '#B0060F', light: '#FF4D55' }
-          },
-          boxShadow: {
-            glow: '0 0 30px rgba(229,9,20,0.35)'
-          },
-          backgroundImage: {
-            'grid-fade': 'radial-gradient(1200px 500px at 50% -20%, rgba(229,9,20,.25), transparent 60%)'
-          },
-          transitionProperty: {
-            'all': 'all'
-          }
+          colors: { brand: { DEFAULT: '#E50914', dark: '#B0060F', light: '#FF4D55' } },
+          boxShadow: { glow: '0 0 30px rgba(229,9,20,0.35)' },
+          backgroundImage: { 'grid-fade': 'radial-gradient(1200px 500px at 50% -20%, rgba(229,9,20,.25), transparent 60%)' }
         }
       }
     }
@@ -43,12 +34,13 @@
   </style>
 </head>
 
-<body class="grain min-h-dvh bg-black text-white selection:bg-brand/40">
+<body class="grain bg-black text-white selection:bg-brand/40">
   <div class="pointer-events-none absolute inset-0 bg-grid-fade"></div>
 
   <!-- Header -->
-  <header class="relative z-10">
+  <header class="relative z-20 border-b border-white/10">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <!-- Logo -->
       <a href="/" class="flex items-center gap-3 group">
         <div class="h-9 w-9 grid place-items-center rounded-xl bg-brand shadow-glow group-hover:scale-110 transition-all duration-300">
           <span class="font-black text-xl">X</span>
@@ -58,46 +50,70 @@
           <div class="text-[11px] text-white/60 -mt-0.5">Your Movies. Your Stream. Anytime.</div>
         </div>
       </a>
+
+      <!-- Desktop Nav -->
       <nav class="hidden md:flex items-center gap-6 text-sm">
         <a href="#featured" class="hover:text-brand-light transition-all">Featured</a>
         <a href="#library" class="hover:text-brand-light transition-all">My Library</a>
         <a href="#how" class="hover:text-brand-light transition-all">How It Works</a>
+        <a href="#vault" class="hover:text-brand-light transition-all">Your Vault</a>
       </nav>
+
+      <!-- Right side -->
       <div class="flex items-center gap-3">
-        <a href="#add" class="inline-flex items-center rounded-xl bg-brand px-4 py-2 text-sm font-semibold hover:bg-brand-dark active:scale-95 transition-all shadow-glow">
+        <a href="#add" class="hidden sm:inline-flex items-center rounded-xl bg-brand px-4 py-2 text-sm font-semibold hover:bg-brand-dark active:scale-95 transition-all shadow-glow">
           Add Movies
         </a>
+        <!-- Hamburger -->
+        <button id="menu-btn" class="md:hidden p-2 rounded-lg hover:bg-white/10 transition" aria-label="Open menu" aria-expanded="false">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
       </div>
+    </div>
+
+    <!-- Mobile Dropdown (pushes page down) -->
+    <div id="mobile-menu" class="hidden md:hidden bg-black/95 border-t border-white/10">
+      <nav class="flex flex-col p-4 space-y-3 text-sm">
+        <a href="#featured" class="hover:text-brand-light transition-all">Featured</a>
+        <a href="#library" class="hover:text-brand-light transition-all">My Library</a>
+        <a href="#how" class="hover:text-brand-light transition-all">How It Works</a>
+        <a href="#vault" class="hover:text-brand-light transition-all">Your Vault</a>
+        <a href="#add" class="rounded-xl bg-brand px-4 py-2 text-sm font-semibold hover:bg-brand-dark transition-all text-center">
+          Add Movies
+        </a>
+      </nav>
     </div>
   </header>
 
   <!-- Hero -->
   <section class="relative z-10">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
-      <div class="grid lg:grid-cols-2 gap-8 items-center">
-        <div class="fade-in">
-          <h1 class="text-4xl sm:text-5xl font-black leading-tight">
-            Build your personal <span class="text-brand">streaming library</span>.
-          </h1>
-          <p class="mt-4 text-white/80">
-            Import your discs and files once — stream them anywhere, anytime. No rentals. No re-buys. Your collection, your rules.
-          </p>
-          <form class="mt-6 flex gap-2" onsubmit="event.preventDefault(); alert('Search coming soon.');">
-            <input class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-brand placeholder:text-white/40 transition-all" placeholder="Search your library…" />
-            <button class="rounded-xl bg-brand px-4 py-3 font-semibold hover:bg-brand-dark active:scale-95 transition-all">Search</button>
-          </form>
-          <div class="mt-4 flex flex-wrap gap-3 text-sm">
-            <a href="#library" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-brand/20 border border-white/10 transition-all">Open Library</a>
-            <a href="#add" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-brand/20 border border-white/10 transition-all">Add a New Movie</a>
-            <a href="#how" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-brand/20 border border-white/10 transition-all">How It Works</a>
-          </div>
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 lg:py-16 grid lg:grid-cols-2 gap-8 items-center">
+      <div class="fade-in">
+        <h1 class="text-4xl sm:text-5xl font-black leading-tight">
+          Build your personal <span class="text-brand">streaming library</span>.
+        </h1>
+        <p class="mt-4 text-white/80">
+          Import your discs and files once — stream them anywhere, anytime. No rentals. No re-buys. Your collection, your rules.
+        </p>
+        <form class="mt-6 flex gap-2" onsubmit="event.preventDefault(); alert('Search coming soon.');">
+          <input class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-brand placeholder:text-white/40 transition-all"
+                 placeholder="Search your library…" />
+          <button class="rounded-xl bg-brand px-4 py-3 font-semibold hover:bg-brand-dark active:scale-95 transition-all">Search</button>
+        </form>
+        <div class="mt-4 flex flex-wrap gap-3 text-sm">
+          <a href="#library" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-brand/20 border border-white/10 transition-all">Open Library</a>
+          <a href="#add" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-brand/20 border border-white/10 transition-all">Add a New Movie</a>
+          <a href="#how" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-brand/20 border border-white/10 transition-all">How It Works</a>
         </div>
-        <div class="fade-in lg:justify-self-end w-full max-w-[560px]">
-          <div class="rounded-2xl overflow-hidden border border-white/10 bg-white/5 shadow-glow hover:scale-[1.02] transition-all duration-500">
-            <img class="w-full aspect-video object-cover" src="https://picsum.photos/960/540?random=12" alt="Cinematic preview" />
-          </div>
-          <div class="mt-3 text-xs text-white/50">Replace with your hero artwork later.</div>
+      </div>
+      <div class="fade-in lg:justify-self-end w-full max-w-[560px]">
+        <div class="rounded-2xl overflow-hidden border border-white/10 bg-white/5 shadow-glow hover:scale-[1.02] transition-all duration-500">
+          <img class="w-full aspect-video object-cover" src="https://picsum.photos/960/540?random=12" alt="Cinematic preview" />
         </div>
+        <div class="mt-3 text-xs text-white/50">Replace with your hero artwork later.</div>
       </div>
     </div>
   </section>
@@ -109,7 +125,8 @@
         <h2 class="text-xl font-semibold">Featured</h2>
         <a href="#library" class="text-sm text-white/60 hover:text-brand-light transition-all">View all</a>
       </div>
-      <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Cards -->
         <a href="#play/feature-a" class="card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 hover:shadow-glow transition-all">
           <img class="card-img w-full aspect-[16/9] object-cover" src="https://picsum.photos/960/540?random=101" alt="Feature A">
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
@@ -144,10 +161,45 @@
       <h2 class="text-xl font-semibold">My Library</h2>
       <p class="mt-2 text-white/70 text-sm">When you add movies, they’ll appear here in rows and categories.</p>
       <div class="mt-5 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10 hover:shadow-glow transition-all"></div>
-        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10 hover:shadow-glow transition-all"></div>
-        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10 hover:shadow-glow transition-all"></div>
-        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10 hover:shadow-glow transition-all"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="relative z-10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+      <h2 class="text-xl font-semibold">How It Works</h2>
+      <ol class="mt-3 space-y-3 text-sm text-white/80">
+        <li>1) Click <span class="font-semibold text-white">Add Movies</span> to start.</li>
+        <li>2) Choose from “Import Disc” or “Upload File”.</li>
+        <li>3) Your titles appear in <span class="font-semibold text-white">My Library</span> and play instantly on any device.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Add Movies -->
+  <section id="add" class="relative z-10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <h3 class="text-lg font-semibold">Add a New Movie</h3>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <button onclick="alert('Import Disc flow coming soon.')"
+                  class="rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 px-4 py-3 text-left">
+            <div class="font-semibold">Import Disc</div>
+            <div class="text-xs text-white/60">Insert your DVD/Blu-ray and follow the prompts.</div>
+          </button>
+          <button onclick="alert('Upload File flow coming soon.')"
+                  class="rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 px-4 py-3 text-left">
+            <div class="font-semibold">Upload File</div>
+            <div class="text-xs text-white/60">Add a local file or from your drive.</div>
+          </button>
+        </div>
       </div>
     </div>
   </section>
@@ -158,65 +210,133 @@
       <div class="flex items-center justify-between">
         <h2 class="text-xl font-semibold">Your Vault</h2>
       </div>
-      <div class="mt-4 flex flex-wrap gap-2" role="tablist">
-        <button class="vault-tab rounded-xl px-4 py-2 text-sm border border-white/10 bg-white/10 transition-all hover:bg-brand/20" data-tab="movies" aria-selected="true">Movies</button>
-        <button class="vault-tab rounded-xl px-4 py-2 text-sm border border-white/10 bg-white/5 transition-all hover:bg-brand/20" data-tab="docs">Docs</button>
-        <button class="vault-tab rounded-xl px-4 py-2 text-sm border border-white/10 bg-white/5 transition-all hover:bg-brand/20" data-tab="pictures">Pictures</button>
+
+      <!-- Tabs -->
+      <div class="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Content types">
+        <button class="vault-tab rounded-xl px-4 py-2 text-sm border border-white/10 bg-white/10"
+                data-tab="movies" aria-selected="true" role="tab">Movies</button>
+        <button class="vault-tab rounded-xl px-4 py-2 text-sm border border-white/10 bg-white/5"
+                data-tab="docs" role="tab">Docs</button>
+        <button class="vault-tab rounded-xl px-4 py-2 text-sm border border-white/10 bg-white/5"
+                data-tab="pictures" role="tab">Pictures</button>
       </div>
+
+      <!-- Panels -->
       <div class="mt-6 space-y-6">
         <!-- Movies -->
-        <div class="vault-panel" data-panel="movies">
-          <div class="rounded-2xl border border-white/10 bg-white/5 p-4 hover:shadow-glow transition-all">
-            <div class="text-sm text-white/70">Movies / <span class="sub-label">All</span></div>
-            <div class="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10 hover:shadow-glow"></div>
-              <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10 hover:shadow-glow"></div>
+        <div class="vault-panel" data-panel="movies" role="tabpanel">
+          <div class="grid gap-6 lg:grid-cols-[220px,1fr]">
+            <aside class="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <div class="text-xs uppercase tracking-wide text-white/50 mb-2">Folders</div>
+              <nav class="grid">
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="All">All</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="By Genre">By Genre</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Recently Added">Recently Added</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Favorites">Favorites</button>
+              </nav>
+            </aside>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="flex items-center justify-between">
+                <div class="text-sm text-white/70">Movies / <span class="sub-label">All</span></div>
+                <a href="#add" class="text-sm hover:text-brand">+ Add</a>
+              </div>
+              <div class="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-[2/3] rounded-xl bg-white/5 border border-white/10"></div>
+              </div>
             </div>
           </div>
         </div>
+
         <!-- Docs -->
-        <div class="vault-panel hidden" data-panel="docs">
-          <div class="rounded-2xl border border-white/10 bg-white/5 p-4 hover:shadow-glow transition-all">
-            <div class="text-sm text-white/70">Docs / <span class="sub-label">All</span></div>
-            <div class="mt-4 divide-y divide-white/10">
-              <div class="flex items-center justify-between py-3 hover:bg-white/10 transition-all">
-                <div class="text-sm">Proposal.pdf</div><div class="text-xs text-white/50">1.2 MB</div>
+        <div class="vault-panel hidden" data-panel="docs" role="tabpanel">
+          <div class="grid gap-6 lg:grid-cols-[220px,1fr]">
+            <aside class="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <div class="text-xs uppercase tracking-wide text-white/50 mb-2">Folders</div>
+              <nav class="grid">
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="All">All</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="PDFs">PDFs</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Word">Word</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Spreadsheets">Spreadsheets</button>
+              </nav>
+            </aside>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="flex items-center justify-between">
+                <div class="text-sm text-white/70">Docs / <span class="sub-label">All</span></div>
+                <a href="#add" class="text-sm hover:text-brand">+ Upload</a>
               </div>
-              <div class="flex items-center justify-between py-3 hover:bg-white/10 transition-all">
-                <div class="text-sm">Notes.docx</div><div class="text-xs text-white/50">84 KB</div>
+              <div class="mt-4 divide-y divide-white/10">
+                <div class="flex items-center justify-between py-3">
+                  <div class="text-sm">Proposal.pdf</div><div class="text-xs text-white/50">1.2 MB</div>
+                </div>
+                <div class="flex items-center justify-between py-3">
+                  <div class="text-sm">Meeting Notes.docx</div><div class="text-xs text-white/50">84 KB</div>
+                </div>
+                <div class="flex items-center justify-between py-3">
+                  <div class="text-sm">Budget.xlsx</div><div class="text-xs text-white/50">212 KB</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
         <!-- Pictures -->
-        <div class="vault-panel hidden" data-panel="pictures">
-          <div class="rounded-2xl border border-white/10 bg-white/5 p-4 hover:shadow-glow transition-all">
-            <div class="text-sm text-white/70">Pictures / <span class="sub-label">All</span></div>
-            <div class="mt-4 grid gap-3 grid-cols-3 sm:grid-cols-4 md:grid-cols-6">
-              <div class="aspect-square rounded-xl bg-white/5 border border-white/10 hover:shadow-glow"></div>
-              <div class="aspect-square rounded-xl bg-white/5 border border-white/10 hover:shadow-glow"></div>
-              <div class="aspect-square rounded-xl bg-white/5 border border-white/10 hover:shadow-glow"></div>
+        <div class="vault-panel hidden" data-panel="pictures" role="tabpanel">
+          <div class="grid gap-6 lg:grid-cols-[220px,1fr]">
+            <aside class="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <div class="text-xs uppercase tracking-wide text-white/50 mb-2">Folders</div>
+              <nav class="grid">
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="All">All</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Albums">Albums</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Camera Roll">Camera Roll</button>
+                <button class="sub-link text-left px-3 py-2 rounded-lg hover:bg-white/10" data-sub="Favorites">Favorites</button>
+              </nav>
+            </aside>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="flex items-center justify-between">
+                <div class="text-sm text-white/70">Pictures / <span class="sub-label">All</span></div>
+                <a href="#add" class="text-sm hover:text-brand">+ Upload</a>
+              </div>
+              <div class="mt-4 grid gap-3 grid-cols-3 sm:grid-cols-4 md:grid-cols-6">
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+                <div class="aspect-square rounded-xl bg-white/5 border border-white/10"></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+
+      </div> <!-- /space-y-6 -->
     </div>
   </section>
 
   <!-- Footer -->
   <footer class="relative z-10 border-t border-white/10 bg-black/60">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 text-xs text-white/60 flex justify-between">
-      <div>© <span id="y"></span> X-Streamify. All rights reserved.</div>
-      <div class="space-x-4">
-        <a href="#" class="hover:text-brand-light transition-all">About</a>
-        <a href="#" class="hover:text-brand-light transition-all">Contact</a>
-        <a href="#" class="hover:text-brand-light transition-all">Terms</a>
-      </div>
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 text-xs text-white/60">
+      © <span id="y"></span> X-Streamify. All rights reserved.
     </div>
   </footer>
 
   <script>
+    // Year
     document.getElementById('y').textContent = new Date().getFullYear();
+
+    // Mobile menu toggle (adds/removes `hidden` so it pushes content down)
+    const menuBtn = document.getElementById('menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    menuBtn.addEventListener('click', () => {
+      const isHidden = mobileMenu.classList.toggle('hidden');
+      menuBtn.setAttribute('aria-expanded', (!isHidden).toString());
+    });
+
+    // Tabs
     const tabs = document.querySelectorAll('.vault-tab');
     const panels = document.querySelectorAll('.vault-panel');
     function showPanel(name) {
@@ -229,6 +349,14 @@
       });
     }
     tabs.forEach(t => t.addEventListener('click', () => showPanel(t.dataset.tab)));
+
+    // Subfolder labels
+    document.querySelectorAll('.vault-panel').forEach(panel => {
+      const label = panel.querySelector('.sub-label');
+      panel.querySelectorAll('.sub-link').forEach(btn => {
+        btn.addEventListener('click', () => { if (label) label.textContent = btn.dataset.sub || btn.textContent.trim(); });
+      });
+    });
   </script>
 </body>
 </html>
