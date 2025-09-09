@@ -1,279 +1,252 @@
 ﻿<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>X-Streamify</title>
-
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-
-  <style>
-    :root { color-scheme: dark; }
-
-    /* Full-width red underline under the header */
-    header::after{
-      content:""; position:absolute; left:0; right:0; bottom:0; height:2px;
-      background: rgba(239,68,68,.72); pointer-events:none;
-    }
-
-    /* Force the red outline around the Vault “Movies / All (+ Add)” pane */
-    #pane-movies{
-      border: 2px solid rgba(239,68,68,.65) !important; /* red-600/65 */
-      border-radius: 1rem !important;
-      background-color: rgba(23,23,23,.4);
-    }
-
-    /* CSS-only mobile menu toggle (no JS needed) */
-    #mobileMenu { display: none; }
-    #nav-toggle:checked ~ #mobileMenu { display: block; }
-  </style>
-</head>
-<body class="bg-neutral-950 text-neutral-100 antialiased">
-  <!-- Header -->
-  <header class="sticky top-0 z-40 bg-neutral-950/80 backdrop-blur border-b border-neutral-900 relative">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-      <!-- Left: logo -->
-      <a href="#" class="flex items-center gap-3">
-        <svg class="h-7 w-7 rounded-md" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-          <rect x="1" y="1" width="22" height="22" rx="6" fill="#ef4444"/>
-          <path d="M9 8l7 4-7 4V8z" fill="#ffffff"/>
-          <circle cx="16.5" cy="7.5" r="1.5" fill="#ffffff"/>
-          <title>X-Streamify brand mark</title>
-        </svg>
-        <div class="leading-tight">
-          <div class="text-sm sm:text-base font-extrabold tracking-tight">X-Streamify</div>
-          <div class="hidden sm:block text-[10px] text-neutral-400">Your Movies. Your Stream. Anytime.</div>
-        </div>
-      </a>
-
-      <!-- Center: nav (desktop) -->
-      <nav class="hidden md:flex items-center gap-6 text-sm text-neutral-300">
-        <a href="#featured" class="hover:text-white">Featured</a>
-        <a href="#mylibrary" class="hover:text-white">My Library</a>
-        <a href="#how" class="hover:text-white">How It Works</a>
-        <a href="#vault" class="hover:text-white">Your Vault</a>
-      </nav>
-
-      <!-- Right: Add Movies (desktop) -->
-      <a href="#add" class="hidden md:inline-flex items-center rounded-full bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500">
-        Add Movies
-      </a>
-
-      <!-- Mobile burger (label toggles the hidden checkbox) -->
-      <label for="nav-toggle" class="md:hidden inline-flex items-center justify-center rounded-lg p-2 hover:bg-neutral-800" aria-label="Toggle menu">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </label>
-    </div>
-
-    <!-- Hidden checkbox controls menu visibility (must come before the menu element) -->
-    <input id="nav-toggle" type="checkbox" class="hidden" />
-
-    <!-- Mobile dropdown (right aligned; super high z-index) -->
-    <div id="mobileMenu"
-         class="absolute right-4 top-14 z-[9999] w-56 rounded-xl border border-neutral-800 bg-neutral-900/95 shadow-2xl backdrop-blur">
-      <div class="py-2 text-sm">
-        <a href="#featured"  class="block px-3 py-2 rounded hover:bg-neutral-800 text-right">Featured</a>
-        <a href="#mylibrary" class="block px-3 py-2 rounded hover:bg-neutral-800 text-right">My Library</a>
-        <a href="#how"       class="block px-3 py-2 rounded hover:bg-neutral-800 text-right">How It Works</a>
-        <a href="#vault"     class="block px-3 py-2 rounded hover:bg-neutral-800 text-right">Your Vault</a>
-      </div>
-    </div>
-  </header>
-
-  <!-- Hero -->
-  <section class="relative">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-        <div class="flex flex-col justify-center">
-          <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
-            Build your personal <span class="text-red-500">streaming library.</span>
-          </h1>
-          <p class="mt-3 text-sm sm:text-base text-neutral-300 max-w-xl">
-            Import your discs and files once — stream them anywhere, anytime. No rentals. No re-buys. Your collection, your rules.
-          </p>
-
-          <div class="mt-4 flex items-center gap-2 max-w-lg">
-            <input type="search" placeholder="Search your library..." class="flex-1 rounded-xl bg-neutral-900/80 border border-neutral-800 px-4 py-2 text-sm outline-none focus:border-neutral-700" />
-            <button class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500">Search</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>X-Streamify — Build your personal streaming library.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: { netflix: { red: "#E50914", dark: "#141414" } },
+            boxShadow: { glow: "0 0 30px rgba(229, 9, 20, 0.35)" }
+          }
+        }
+      }
+    </script>
+    <style>.safe-bottom{padding-bottom:env(safe-area-inset-bottom)}</style>
+  </head>
+  <body class="bg-black text-white antialiased">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-black/80 backdrop-blur border-b border-white/10">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="h-7 w-7 rounded bg-[rgba(229,9,20,0.15)] ring-1 ring-red-600/60 shadow-glow grid place-items-center">
+              <span class="text-lg font-black tracking-tight text-red-500">X</span>
+            </div>
+            <span class="text-lg sm:text-xl font-semibold tracking-tight">X-Streamify</span>
           </div>
-
-          <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
-            <a href="#open" class="rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 hover:border-neutral-700">Open Library</a>
-            <a href="#add" class="rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 hover:border-neutral-700">Add a New Movie</a>
-            <a href="#how" class="rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 hover:border-neutral-700">How It Works</a>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-center">
-          <figure class="w-full rounded-2xl border border-red-700/40 bg-neutral-900/60 p-2">
-            <img class="aspect-video w-full rounded-xl object-cover"
-                 src="https://images.unsplash.com/photo-1473181488821-2d23949a045a?q=80&w=1600&auto=format&fit=crop"
-                 alt="Hero artwork placeholder">
-            <figcaption class="px-2 py-2 text-xs text-neutral-400">Replace with your hero artwork later.</figcaption>
-          </figure>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Featured -->
-  <section id="featured" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-base sm:text-lg font-semibold">Featured</h2>
-      <a href="#" class="text-xs sm:text-sm text-neutral-400 hover:text-neutral-200">View all</a>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      <article class="group">
-        <div class="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-neutral-800">
-          <img src="https://images.unsplash.com/photo-1544551763-7ef4200b79c9?q=80&w=1600&auto=format&fit=crop" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-          <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-neutral-900/60"></div>
-        </div>
-        <div class="mt-2">
-          <h3 class="text-sm font-semibold">Feature A</h3>
-          <p class="text-xs text-neutral-400">Sci-Fi • 2h 11m</p>
-        </div>
-      </article>
-
-      <article class="group">
-        <div class="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-neutral-800">
-          <img src="https://images.unsplash.com/photo-1482192505345-5655af888cc4?q=80&w=1600&auto=format&fit=crop" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-          <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-neutral-900/60"></div>
-        </div>
-        <div class="mt-2">
-          <h3 class="text-sm font-semibold">Feature B</h3>
-          <p class="text-xs text-neutral-400">Drama • 1h 54m</p>
-        </div>
-      </article>
-
-      <article class="group">
-        <div class="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-neutral-800">
-          <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1600&auto=format&fit=crop" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-          <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-neutral-900/60"></div>
-        </div>
-        <div class="mt-2">
-          <h3 class="text-sm font-semibold">Feature C</h3>
-          <p class="text-xs text-neutral-400">Action • 2h 03m</p>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <!-- My Library -->
-  <section id="mylibrary" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-    <h2 class="text-base sm:text-lg font-semibold">My Library</h2>
-    <p class="mt-1 text-xs sm:text-sm text-neutral-400">When you add movies, they’ll appear here in rows and categories.</p>
-    <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      <div class="aspect-[2/3] rounded-2xl border border-neutral-800 bg-neutral-900/30"></div>
-      <div class="aspect-[2/3] rounded-2xl border border-neutral-800 bg-neutral-900/30"></div>
-      <div class="aspect-[2/3] rounded-2xl border border-neutral-800 bg-neutral-900/30"></div>
-      <div class="aspect-[2/3] rounded-2xl border border-neutral-800 bg-neutral-900/30"></div>
-      <div class="aspect-[2/3] rounded-2xl border border-neutral-800 bg-neutral-900/30 hidden lg:block"></div>
-    </div>
-  </section>
-
-  <!-- How It Works -->
-  <section id="how" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-    <h2 class="text-base sm:text-lg font-semibold">How It Works</h2>
-    <ol class="mt-2 space-y-2 text-sm text-neutral-300">
-      <li>1) Click <span class="font-semibold">Add Movies</span> to start.</li>
-      <li>2) Choose from “<span class="font-semibold">Import Disc</span>” or “<span class="font-semibold">Upload File</span>”.</li>
-      <li>3) Your titles appear in <span class="font-semibold">My Library</span> and play instantly on any device.</li>
-    </ol>
-  </section>
-
-  <!-- Add a New Movie -->
-  <section id="add" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-    <h3 class="text-base sm:text-lg font-semibold">Add a New Movie</h3>
-    <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
-        <div class="text-sm font-semibold">Import Disc</div>
-        <div class="text-xs text-neutral-400">Insert your DVD/Blu-ray and follow the prompts.</div>
-      </div>
-      <div class="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
-        <div class="text-sm font-semibold">Upload File</div>
-        <div class="text-xs text-neutral-400">Add a local file or from your drive.</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Your Vault -->
-  <section id="vault" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-    <div class="flex items-center justify-between">
-      <h2 class="text-base sm:text-lg font-semibold">Your Vault</h2>
-      <div class="flex items-center gap-2">
-        <button data-tab="movies" class="vault-tab rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 text-xs sm:text-sm hover:border-neutral-700 aria-selected:bg-red-600 aria-selected:text-white" aria-selected="true">Movies</button>
-        <button data-tab="docs" class="vault-tab rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 text-xs sm:text-sm hover:border-neutral-700">Docs</button>
-        <button data-tab="pics" class="vault-tab rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 text-xs sm:text-sm hover:border-neutral-700">Pictures</button>
-      </div>
-    </div>
-
-    <div class="mt-4 grid grid-cols-1 lg:grid-cols-[260px,1fr] gap-4">
-      <aside class="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-4">
-        <div class="text-xs uppercase tracking-wider text-neutral-500 mb-3">Folders</div>
-        <ul class="space-y-2 text-sm">
-          <li><a class="block rounded-lg px-3 py-2 hover:bg-neutral-800" href="#">All</a></li>
-          <li><a class="block rounded-lg px-3 py-2 hover:bg-neutral-800" href="#">By Genre</a></li>
-          <li><a class="block rounded-lg px-3 py-2 hover:bg-neutral-800" href="#">Recently Added</a></li>
-          <li><a class="block rounded-lg px-3 py-2 hover:bg-neutral-800" href="#">Favorites</a></li>
-        </ul>
-      </aside>
-
-      <div>
-        <!-- Movies pane -->
-        <div id="pane-movies" class="rounded-2xl p-4">
-          <div class="mb-2 flex items-center justify-between">
-            <div class="text-xs sm:text-sm text-neutral-400">Movies / All</div>
-            <a href="#" class="text-xs sm:text-sm text-neutral-400 hover:text-neutral-200">+ Add</a>
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            <div class="aspect-[2/3] rounded-2xl border border-neutral-800 bg-neutral-900/30"></div>
-            <div class="aspect-[2/3] rounded-2xl border border-neutral-800 bg-neutral-900/30"></div>
-            <div class="aspect-[2/3] rounded-2xl border border-neutral-800 bg-neutral-900/30"></div>
-            <div class="aspect-[2/3] rounded-2xl border border-neutral-800 bg-neutral-900/30"></div>
-            <div class="aspect-[2/3] rounded-2xl border border-neutral-800 bg-neutral-900/30 hidden lg:block"></div>
-          </div>
-        </div>
-
-        <div id="pane-docs" class="hidden rounded-2xl border border-neutral-800 bg-neutral-900/40 p-4">
-          <div class="mb-2 text-xs sm:text-sm text-neutral-400">Docs / All</div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <div class="aspect-[4/3] rounded-2xl border border-neutral-800 bg-neutral-900/30"></div>
-            <div class="aspect-[4/3] rounded-2xl border border-neutral-800 bg-neutral-900/30"></div>
-          </div>
-        </div>
-
-        <div id="pane-pics" class="hidden rounded-2xl border border-neutral-800 bg-neutral-900/40 p-4">
-          <div class="mb-2 text-xs sm:text-sm text-neutral-400">Pictures / All</div>
-          <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-            <div class="aspect-square rounded-xl border border-neutral-800 bg-neutral-900/30"></div>
-            <div class="aspect-square rounded-xl border border-neutral-800 bg-neutral-900/30"></div>
-            <div class="aspect-square rounded-xl border border-neutral-800 bg-neutral-900/30"></div>
+          <nav class="hidden md:flex items-center gap-6 text-sm">
+            <a class="opacity-90 hover:opacity-100 transition" href="#featured">Featured</a>
+            <a class="opacity-90 hover:opacity-100 transition" href="#mylibrary">My Library</a>
+            <a class="opacity-90 hover:opacity-100 transition" href="#how">How It Works</a>
+            <a class="opacity-90 hover:opacity-100 transition" href="#vault">Your Vault</a>
+          </nav>
+          <div class="flex items-center gap-3">
+            <a href="#add" class="hidden sm:inline-flex items-center rounded-2xl px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 transition shadow-glow">
+              Add Movies
+            </a>
+            <button id="burger" class="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-white/10">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                <path fill-rule="evenodd" d="M3.75 6.75A.75.75 0 0 1 4.5 6h15a.75.75 0 0 1 0 1.5h-15a.75.75 0 0 1-.75-.75ZM3.75 12a.75.75 0 0 1 .75-.75h15a.75.75 0 0 1 0 1.5h-15A.75.75 0 0 1 3.75 12Zm0 5.25a.75.75 0 0 1 .75-.75h15a.75.75 0 0 1 0 1.5h-15a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- Footer -->
-  <footer class="mt-8 border-t border-neutral-900">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 text-xs sm:text-sm text-neutral-400 flex items-center justify-between">
-      <div>© <span id="year"></span> X-Streamify. All rights reserved.</div>
-      <nav class="flex items-center gap-4">
-        <a href="#" class="hover:text-neutral-200">About</a>
-        <a href="#" class="hover:text-neutral-200">Contact</a>
-        <a href="#" class="hover:text-neutral-200">Terms</a>
-      </nav>
-    </div>
-  </footer>
+      <!-- Mobile dropdown -->
+      <div id="mobileMenu" class="hidden md:hidden">
+        <div class="w-screen max-w-none">
+          <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mt-2 rounded-2xl ring-1 ring-white/10 bg-zinc-900/95 overflow-hidden shadow-glow safe-bottom">
+              <div class="flex flex-col divide-y divide-white/10">
+                <a href="#featured" class="px-4 py-4 text-base hover:bg-white/5">Featured</a>
+                <a href="#mylibrary" class="px-4 py-4 text-base hover:bg-white/5">My Library</a>
+                <a href="#how" class="px-4 py-4 text-base hover:bg-white/5">How It Works</a>
+                <a href="#vault" class="px-4 py-4 text-base hover:bg-white/5">Your Vault</a>
+                <a href="#add" class="px-4 py-4 text-base font-semibold text-red-400 hover:bg-white/5">Add Movies</a>
+              </div>
+              <div class="w-full h-0.5 sm:h-1 bg-red-600"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
 
-  <script>
-    // Only sets the year. Menu uses pure CSS now.
-    (function(){var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear();})();
-  </script>
-</body>
+    <!-- Hero -->
+    <section class="relative">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight">Build your personal streaming library.</h1>
+            <p class="mt-4 text-white/70 max-w-xl">Import your discs or files and stream your own collection anywhere. Your Movies. Your Stream. Anytime.</p>
+            <div class="mt-6 flex flex-col sm:flex-row gap-3">
+              <input type="text" placeholder="Search your library…" class="w-full sm:w-80 rounded-xl bg-white/5 ring-1 ring-white/10 px-4 py-3 placeholder-white/40 focus:outline-none focus:ring-red-600" />
+              <div class="flex gap-2">
+                <a href="#featured" class="inline-flex items-center rounded-xl px-3 py-2 ring-1 ring-white/10 bg-white/5 hover:bg-white/10 text-sm">Featured</a>
+                <a href="#add" class="inline-flex items-center rounded-xl px-3 py-2 ring-1 ring-red-600 bg-red-600/10 hover:bg-red-600/20 text-sm">Add Movies</a>
+              </div>
+            </div>
+          </div>
+          <div class="relative">
+            <div class="rounded-3xl overflow-hidden ring-1 ring-red-600/40 shadow-glow">
+              <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1974&auto=format&fit=crop" alt="Cinema seats" class="w-full h-64 sm:h-80 lg:h-[420px] object-cover" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured -->
+    <section id="featured" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-semibold">Featured</h2>
+        <a href="#" class="text-sm text-white/70 hover:text-white">See all</a>
+      </div>
+      <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+        <div class="aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10"></div>
+        <div class="aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10"></div>
+      </div>
+    </section>
+
+    <!-- My Library -->
+    <section id="mylibrary" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <h2 class="text-xl font-semibold">My Library</h2>
+      <div class="mt-4 grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-3">
+        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <h2 class="text-xl font-semibold">How It Works</h2>
+      <ol class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+        <li class="p-4 rounded-xl ring-1 ring-white/10 bg-white/5">1) Import your disc or upload your file</li>
+        <li class="p-4 rounded-xl ring-1 ring-white/10 bg-white/5">2) We store it securely in your Vault</li>
+        <li class="p-4 rounded-xl ring-1 ring-white/10 bg-white/5">3) Stream anywhere, anytime</li>
+      </ol>
+    </section>
+
+    <!-- Add a New Movie -->
+    <section id="add" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <h2 class="text-xl font-semibold">Add a New Movie</h2>
+      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="p-5 rounded-2xl ring-1 ring-white/10 bg-white/5 hover:bg-white/10 transition">
+          <h3 class="font-semibold">Import Disc</h3>
+          <p class="mt-1 text-white/70 text-sm">Use our X-StreamPort to ingest your DVD/Blu-ray.</p>
+        </div>
+        <div class="p-5 rounded-2xl ring-1 ring-white/10 bg-white/5 hover:bg-white/10 transition">
+          <h3 class="font-semibold">Upload File</h3>
+          <p class="mt-1 text-white/70 text-sm">Drag & drop a movie file from your device.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Vault -->
+    <section id="vault" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-semibold">Your Vault</h2>
+      </div>
+      <div class="mt-4 flex gap-2 text-sm">
+        <button class="px-3 py-2 rounded-xl ring-1 ring-white/10 bg-white/5">Movies</button>
+        <button class="px-3 py-2 rounded-xl ring-1 ring-white/10">Docs</button>
+        <button class="px-3 py-2 rounded-xl ring-1 ring-white/10">Pictures</button>
+      </div>
+      <div class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <aside class="lg:col-span-1">
+          <div class="rounded-2xl ring-1 ring-white/10">
+            <div class="p-4 border-b border-white/10 font-medium">Folders</div>
+            <nav class="p-2 text-sm">
+              <a class="block px-3 py-2 rounded-lg hover:bg-white/5" href="#">All</a>
+              <a class="block px-3 py-2 rounded-lg hover:bg-white/5" href="#">By Genre</a>
+              <a class="block px-3 py-2 rounded-lg hover:bg-white/5" href="#">Recently Added</a>
+              <a class="block px-3 py-2 rounded-lg hover:bg-white/5" href="#">Favorites</a>
+            </nav>
+          </div>
+        </aside>
+        <div class="lg:col-span-3">
+          <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-3">
+            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 py-10 text-center text-sm text-white/60">
+      © <span id="year"></span> X-Streamify. Your Movies. Your Stream. Anytime.
+    </footer>
+
+    <!-- SAFE, NON-DESTRUCTIVE JS -->
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const FALLBACK = "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg";
+      const FEATURED = [
+        "https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg",
+        "https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",
+        "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg"
+      ];
+      const LIBRARY = [
+        "https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg",
+        "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+        "https://image.tmdb.org/t/p/w500/62HCnUTziyWcpDaBO2i1DX17ljH.jpg",
+        "https://image.tmdb.org/t/p/w500/8GxS2hZT0Pq3GkVhXEBKJdXL0u4.jpg",
+        "https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg",
+        "https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
+        "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg"
+      ];
+
+      function putImg(tile, url) {
+        if (tile.querySelector("img")) return; // never overwrite
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "";
+        img.loading = "lazy";
+        img.className = "w-full h-full object-cover";
+        img.onerror = () => { img.onerror = null; img.src = FALLBACK; };
+        tile.classList.add("overflow-hidden","rounded-xl","bg-white/5","ring-1","ring-white/10");
+        tile.appendChild(img);
+      }
+
+      // Fill placeholders ONLY if empty
+      document.querySelectorAll("#featured .grid > div").forEach((t,i)=>FEATURED[i]&&putImg(t,FEATURED[i]));
+      document.querySelectorAll("#mylibrary .grid > div").forEach((t,i)=>LIBRARY[i]&&putImg(t,LIBRARY[i]));
+
+      // Add-section (adds, never replaces)
+      const addSection = document.querySelector("#add");
+      const myLibGrid = document.querySelector("#mylibrary .grid");
+      function makeCard(url){
+        const d=document.createElement("div");
+        d.className="aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10 overflow-hidden";
+        const img=document.createElement("img");
+        img.src=url; img.className="w-full h-full object-cover"; img.loading="lazy";
+        img.onerror=()=>{img.onerror=null; img.src=FALLBACK;};
+        d.appendChild(img); return d;
+      }
+      if(addSection && myLibGrid){
+        const cards = addSection.querySelectorAll(".grid > div");
+        cards[0]?.addEventListener("click", ()=>{
+          myLibGrid.insertBefore(makeCard(FALLBACK), myLibGrid.firstChild);
+          location.hash="#mylibrary";
+        });
+        cards[1]?.addEventListener("click", ()=>{
+          const t=prompt("Movie title:"); if(!t) return;
+          const p=prompt("Poster image URL (https://…):","https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg"); if(!p) return;
+          myLibGrid.insertBefore(makeCard(p), myLibGrid.firstChild);
+          location.hash="#mylibrary";
+        });
+      }
+
+      // Year + burger
+      const y=document.getElementById("year"); if(y) y.textContent=new Date().getFullYear();
+      const b=document.getElementById("burger"), m=document.getElementById("mobileMenu");
+      b?.addEventListener("click", ()=>m.classList.toggle("hidden"));
+    });
+    </script>
+  </body>
 </html>
