@@ -15,9 +15,43 @@
         }
       }
     </script>
-    <style>.safe-bottom{padding-bottom:env(safe-area-inset-bottom)}</style>
+    <style>
+      .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+      /* Hover + tooltip styles */
+      .poster-tile img {
+        transition: transform 0.3s ease;
+      }
+      .poster-tile:hover img {
+        transform: scale(1.08);
+      }
+      .poster-tile {
+        position: relative;
+      }
+      .poster-tile::after {
+        content: attr(data-title);
+        position: absolute;
+        bottom: 6px;
+        left: 6px;
+        right: 6px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        font-size: 0.75rem;
+        padding: 2px 4px;
+        border-radius: 4px;
+        opacity: 0;
+        transform: translateY(4px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        pointer-events: none;
+      }
+      .poster-tile:hover::after {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
   </head>
   <body class="bg-black text-white antialiased">
+
     <!-- Header -->
     <header class="sticky top-0 z-50 bg-black/80 backdrop-blur border-b border-white/10">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -96,9 +130,9 @@
         <a href="#" class="text-sm text-white/70 hover:text-white">See all</a>
       </div>
       <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
-        <div class="aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10"></div>
-        <div class="aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10"></div>
-        <div class="aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10"></div>
+        <div class="poster-tile aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10" data-title="Inception"></div>
+        <div class="poster-tile aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10" data-title="Interstellar"></div>
+        <div class="poster-tile aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10" data-title="The Dark Knight"></div>
       </div>
     </section>
 
@@ -106,13 +140,13 @@
     <section id="mylibrary" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <h2 class="text-xl font-semibold">My Library</h2>
       <div class="mt-4 grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-3">
-        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-        <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 1"></div>
+        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 2"></div>
+        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 3"></div>
+        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 4"></div>
+        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 5"></div>
+        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 6"></div>
+        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 7"></div>
       </div>
     </section>
 
@@ -165,12 +199,12 @@
         </aside>
         <div class="lg:col-span-3">
           <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-3">
-            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
-            <div class="aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10"></div>
+            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 1"></div>
+            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 2"></div>
+            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 3"></div>
+            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 4"></div>
+            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 5"></div>
+            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 6"></div>
           </div>
         </div>
       </div>
@@ -181,7 +215,7 @@
       © <span id="year"></span> X-Streamify. Your Movies. Your Stream. Anytime.
     </footer>
 
-    <!-- Script #1 — posters + fallback + add-movie (non-destructive) -->
+    <!-- Script #1 — posters + fallback + add-movie -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const FALLBACK = "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg";
@@ -200,26 +234,33 @@ document.addEventListener("DOMContentLoaded", () => {
     "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg"
   ];
 
-  function putImg(tile, url) {
+  function putImg(tile, url, title="") {
     if (!tile || tile.querySelector("img")) return;
+    tile.classList.add("poster-tile");               // enable hover + tooltip
+    if (title) tile.setAttribute("data-title", title);
     const img = document.createElement("img");
-    img.src = url; img.alt = ""; img.loading = "lazy";
+    img.src = url; img.alt = title; img.loading = "lazy";
     img.className = "w-full h-full object-cover";
     img.onerror = () => { img.onerror = null; img.src = FALLBACK; };
-    tile.classList.add("overflow-hidden","rounded-xl","bg-white/5","ring-1","ring-white/10");
     tile.appendChild(img);
   }
 
   // Fill placeholders ONLY if empty
-  document.querySelectorAll("#featured .grid > div").forEach((t,i)=>FEATURED[i]&&putImg(t,FEATURED[i]));
-  document.querySelectorAll("#mylibrary .grid > div").forEach((t,i)=>LIBRARY[i]&&putImg(t,LIBRARY[i]));
+  const featuredTitles = ["Inception","Interstellar","The Dark Knight"];
+  document.querySelectorAll("#featured .grid > div")
+    .forEach((t,i)=>FEATURED[i]&&putImg(t,FEATURED[i], featuredTitles[i]||""));
+
+  const libTitles = ["Movie 1","Movie 2","Movie 3","Movie 4","Movie 5","Movie 6","Movie 7"];
+  document.querySelectorAll("#mylibrary .grid > div")
+    .forEach((t,i)=>LIBRARY[i]&&putImg(t,LIBRARY[i], libTitles[i]||""));
 
   // Add-section (adds, never replaces)
   const addSection = document.querySelector("#add");
   const myLibGrid = document.querySelector("#mylibrary .grid");
-  function makeCard(url){
+  function makeCard(url, title="Custom Upload"){
     const d=document.createElement("div");
-    d.className="aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10 overflow-hidden";
+    d.className="poster-tile aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10 overflow-hidden";
+    d.setAttribute("data-title", title);
     const img=document.createElement("img");
     img.src=url; img.className="w-full h-full object-cover"; img.loading="lazy";
     img.onerror=()=>{img.onerror=null; img.src=FALLBACK;};
@@ -228,13 +269,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if(addSection && myLibGrid){
     const cards = addSection.querySelectorAll(".grid > div");
     cards[0]?.addEventListener("click", ()=>{
-      myLibGrid.insertBefore(makeCard(FALLBACK), myLibGrid.firstChild);
+      myLibGrid.insertBefore(makeCard(FALLBACK, "Imported Disc"), myLibGrid.firstChild);
       location.hash="#mylibrary";
     });
     cards[1]?.addEventListener("click", ()=>{
       const t=prompt("Movie title:"); if(!t) return;
       const p=prompt("Poster image URL (https://…):","https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg"); if(!p) return;
-      myLibGrid.insertBefore(makeCard(p), myLibGrid.firstChild);
+      myLibGrid.insertBefore(makeCard(p, t), myLibGrid.firstChild);
       location.hash="#mylibrary";
     });
   }
@@ -246,10 +287,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-<!-- Script #2 — Vault tabs + folder filters (seed + fallbacks) -->
+<!-- Script #2 — Vault tabs + folder filters (seed + fallbacks + hover/tooltip) -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  // Fallback for any broken poster in Vault
   const FALLBACK_V = "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg";
   function applyVaultFallbacks(root) {
     root.querySelectorAll("img").forEach(img => {
@@ -257,33 +297,36 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Grab the ITEMS grid on the right
+  // Items grid on the right
   const vaultItemsGrid =
     document.querySelector('#vault .lg\\:col-span-3 .grid') ||
     document.querySelectorAll('#vault .grid')[document.querySelectorAll('#vault .grid').length - 1];
   if (!vaultItemsGrid) return;
 
-  // Seed posters into Vault placeholders
+  // Seed posters for visibility
   const demoPosters = [
-    "https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg",
-    "https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",
-    "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
-    "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
-    "https://image.tmdb.org/t/p/w500/8GxS2hZT0Pq3GkVhXEBKJdXL0u4.jpg",
-    "https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg"
+    ["Inception","https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg"],
+    ["Interstellar","https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg"],
+    ["The Dark Knight","https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg"],
+    ["Dune","https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg"],
+    ["Oppenheimer (Doc)","https://image.tmdb.org/t/p/w500/8GxS2hZT0Pq3GkVhXEBKJdXL0u4.jpg"],
+    ["Avatar (Picture)","https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg"]
   ];
   Array.from(vaultItemsGrid.children).forEach((tile, i) => {
     if (!tile.querySelector("img") && demoPosters[i]) {
-      tile.classList.add("overflow-hidden","rounded-xl","bg-white/5","ring-1","ring-white/10");
-      tile.innerHTML = `<img src="${demoPosters[i]}" alt="" class="w-full h-full object-cover" loading="lazy">`;
+      const [title, url] = demoPosters[i];
+      tile.classList.add("poster-tile","overflow-hidden","rounded-xl","bg-white/5","ring-1","ring-white/10");
+      tile.setAttribute("data-title", title);
+      tile.innerHTML = `<img src="${url}" alt="${title}" class="w-full h-full object-cover" loading="lazy">`;
+    } else {
+      tile.classList.add("poster-tile");
+      if (!tile.getAttribute("data-title")) tile.setAttribute("data-title","Vault Item");
     }
   });
   applyVaultFallbacks(vaultItemsGrid);
 
-  // Collect tiles
+  // Collect tiles + tag metadata
   const tiles = Array.from(vaultItemsGrid.children);
-
-  // Tag tiles with metadata
   tiles.forEach((t, i) => {
     if (!t.dataset.type)     t.dataset.type = i < tiles.length - 2 ? "movie" : (i === tiles.length - 2 ? "doc" : "picture");
     if (!t.dataset.favorite) t.dataset.favorite = (i % 2 === 0) ? "1" : "0";
@@ -304,7 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Tabs
+  // Tabs (Movies / Docs / Pictures)
   const tabButtons = Array.from(document.querySelectorAll("#vault .mt-4.flex button"));
   const [btnMovies, btnDocs, btnPics] = tabButtons;
   function setActiveTab(btn){ tabButtons.forEach(b=>b.classList.remove("bg-white/5")); btn?.classList.add("bg-white/5"); }
@@ -312,7 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
   btnDocs  ?.addEventListener("click", () => { typeFilter="doc";     setActiveTab(btnDocs);   applyFilters(); });
   btnPics  ?.addEventListener("click", () => { typeFilter="picture"; setActiveTab(btnPics);   applyFilters(); });
 
-  // Folders
+  // Folders (All / By Genre / Recently Added / Favorites)
   const folderLinks = Array.from(document.querySelectorAll("#vault aside nav a"));
   const [linkAll, linkGenre, linkRecent, linkFav] = folderLinks;
   function setActiveFolder(a){ folderLinks.forEach(x=>x.classList.remove("bg-white/5")); a?.classList.add("bg-white/5"); }
