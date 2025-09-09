@@ -46,7 +46,6 @@
           </div>
         </div>
       </div>
-
       <!-- Mobile dropdown -->
       <div id="mobileMenu" class="hidden md:hidden">
         <div class="w-screen max-w-none">
@@ -182,71 +181,149 @@
       © <span id="year"></span> X-Streamify. Your Movies. Your Stream. Anytime.
     </footer>
 
-    <!-- SAFE, NON-DESTRUCTIVE JS -->
-    <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const FALLBACK = "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg";
-      const FEATURED = [
-        "https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg",
-        "https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",
-        "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg"
-      ];
-      const LIBRARY = [
-        "https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg",
-        "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
-        "https://image.tmdb.org/t/p/w500/62HCnUTziyWcpDaBO2i1DX17ljH.jpg",
-        "https://image.tmdb.org/t/p/w500/8GxS2hZT0Pq3GkVhXEBKJdXL0u4.jpg",
-        "https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg",
-        "https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
-        "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg"
-      ];
+    <!-- Script #1 — posters + fallback + add-movie (non-destructive) -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const FALLBACK = "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg";
+  const FEATURED = [
+    "https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg",
+    "https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",
+    "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg"
+  ];
+  const LIBRARY = [
+    "https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg",
+    "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+    "https://image.tmdb.org/t/p/w500/62HCnUTziyWcpDaBO2i1DX17ljH.jpg",
+    "https://image.tmdb.org/t/p/w500/8GxS2hZT0Pq3GkVhXEBKJdXL0u4.jpg",
+    "https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg",
+    "https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
+    "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg"
+  ];
 
-      function putImg(tile, url) {
-        if (tile.querySelector("img")) return; // never overwrite
-        const img = document.createElement("img");
-        img.src = url;
-        img.alt = "";
-        img.loading = "lazy";
-        img.className = "w-full h-full object-cover";
-        img.onerror = () => { img.onerror = null; img.src = FALLBACK; };
-        tile.classList.add("overflow-hidden","rounded-xl","bg-white/5","ring-1","ring-white/10");
-        tile.appendChild(img);
-      }
+  function putImg(tile, url) {
+    if (!tile || tile.querySelector("img")) return;
+    const img = document.createElement("img");
+    img.src = url; img.alt = ""; img.loading = "lazy";
+    img.className = "w-full h-full object-cover";
+    img.onerror = () => { img.onerror = null; img.src = FALLBACK; };
+    tile.classList.add("overflow-hidden","rounded-xl","bg-white/5","ring-1","ring-white/10");
+    tile.appendChild(img);
+  }
 
-      // Fill placeholders ONLY if empty
-      document.querySelectorAll("#featured .grid > div").forEach((t,i)=>FEATURED[i]&&putImg(t,FEATURED[i]));
-      document.querySelectorAll("#mylibrary .grid > div").forEach((t,i)=>LIBRARY[i]&&putImg(t,LIBRARY[i]));
+  // Fill placeholders ONLY if empty
+  document.querySelectorAll("#featured .grid > div").forEach((t,i)=>FEATURED[i]&&putImg(t,FEATURED[i]));
+  document.querySelectorAll("#mylibrary .grid > div").forEach((t,i)=>LIBRARY[i]&&putImg(t,LIBRARY[i]));
 
-      // Add-section (adds, never replaces)
-      const addSection = document.querySelector("#add");
-      const myLibGrid = document.querySelector("#mylibrary .grid");
-      function makeCard(url){
-        const d=document.createElement("div");
-        d.className="aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10 overflow-hidden";
-        const img=document.createElement("img");
-        img.src=url; img.className="w-full h-full object-cover"; img.loading="lazy";
-        img.onerror=()=>{img.onerror=null; img.src=FALLBACK;};
-        d.appendChild(img); return d;
-      }
-      if(addSection && myLibGrid){
-        const cards = addSection.querySelectorAll(".grid > div");
-        cards[0]?.addEventListener("click", ()=>{
-          myLibGrid.insertBefore(makeCard(FALLBACK), myLibGrid.firstChild);
-          location.hash="#mylibrary";
-        });
-        cards[1]?.addEventListener("click", ()=>{
-          const t=prompt("Movie title:"); if(!t) return;
-          const p=prompt("Poster image URL (https://…):","https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg"); if(!p) return;
-          myLibGrid.insertBefore(makeCard(p), myLibGrid.firstChild);
-          location.hash="#mylibrary";
-        });
-      }
-
-      // Year + burger
-      const y=document.getElementById("year"); if(y) y.textContent=new Date().getFullYear();
-      const b=document.getElementById("burger"), m=document.getElementById("mobileMenu");
-      b?.addEventListener("click", ()=>m.classList.toggle("hidden"));
+  // Add-section (adds, never replaces)
+  const addSection = document.querySelector("#add");
+  const myLibGrid = document.querySelector("#mylibrary .grid");
+  function makeCard(url){
+    const d=document.createElement("div");
+    d.className="aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10 overflow-hidden";
+    const img=document.createElement("img");
+    img.src=url; img.className="w-full h-full object-cover"; img.loading="lazy";
+    img.onerror=()=>{img.onerror=null; img.src=FALLBACK;};
+    d.appendChild(img); return d;
+  }
+  if(addSection && myLibGrid){
+    const cards = addSection.querySelectorAll(".grid > div");
+    cards[0]?.addEventListener("click", ()=>{
+      myLibGrid.insertBefore(makeCard(FALLBACK), myLibGrid.firstChild);
+      location.hash="#mylibrary";
     });
-    </script>
-  </body>
-</html>
+    cards[1]?.addEventListener("click", ()=>{
+      const t=prompt("Movie title:"); if(!t) return;
+      const p=prompt("Poster image URL (https://…):","https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg"); if(!p) return;
+      myLibGrid.insertBefore(makeCard(p), myLibGrid.firstChild);
+      location.hash="#mylibrary";
+    });
+  }
+
+  // Year + burger
+  const y=document.getElementById("year"); if(y) y.textContent=new Date().getFullYear();
+  const b=document.getElementById("burger"), m=document.getElementById("mobileMenu");
+  b?.addEventListener("click", ()=>m.classList.toggle("hidden"));
+});
+</script>
+
+<!-- Script #2 — Vault tabs + folder filters (seed + fallbacks) -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Fallback for any broken poster in Vault
+  const FALLBACK_V = "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg";
+  function applyVaultFallbacks(root) {
+    root.querySelectorAll("img").forEach(img => {
+      img.onerror = () => { img.onerror = null; img.src = FALLBACK_V; };
+    });
+  }
+
+  // Grab the ITEMS grid on the right
+  const vaultItemsGrid =
+    document.querySelector('#vault .lg\\:col-span-3 .grid') ||
+    document.querySelectorAll('#vault .grid')[document.querySelectorAll('#vault .grid').length - 1];
+  if (!vaultItemsGrid) return;
+
+  // Seed posters into Vault placeholders
+  const demoPosters = [
+    "https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg",
+    "https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",
+    "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+    "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+    "https://image.tmdb.org/t/p/w500/8GxS2hZT0Pq3GkVhXEBKJdXL0u4.jpg",
+    "https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg"
+  ];
+  Array.from(vaultItemsGrid.children).forEach((tile, i) => {
+    if (!tile.querySelector("img") && demoPosters[i]) {
+      tile.classList.add("overflow-hidden","rounded-xl","bg-white/5","ring-1","ring-white/10");
+      tile.innerHTML = `<img src="${demoPosters[i]}" alt="" class="w-full h-full object-cover" loading="lazy">`;
+    }
+  });
+  applyVaultFallbacks(vaultItemsGrid);
+
+  // Collect tiles
+  const tiles = Array.from(vaultItemsGrid.children);
+
+  // Tag tiles with metadata
+  tiles.forEach((t, i) => {
+    if (!t.dataset.type)     t.dataset.type = i < tiles.length - 2 ? "movie" : (i === tiles.length - 2 ? "doc" : "picture");
+    if (!t.dataset.favorite) t.dataset.favorite = (i % 2 === 0) ? "1" : "0";
+    if (!t.dataset.addedAt)  t.dataset.addedAt = String(tiles.length - i);
+  });
+
+  // Filters
+  let typeFilter = "all";
+  let folderFilter = "all";
+
+  function applyFilters() {
+    tiles.forEach((t) => {
+      let show = true;
+      if (typeFilter !== "all" && t.dataset.type !== typeFilter) show = false;
+      if (folderFilter === "favorites" && t.dataset.favorite !== "1") show = false;
+      if (folderFilter === "recent" && Number(t.dataset.addedAt) > 5) show = false;
+      t.classList.toggle("hidden", !show);
+    });
+  }
+
+  // Tabs
+  const tabButtons = Array.from(document.querySelectorAll("#vault .mt-4.flex button"));
+  const [btnMovies, btnDocs, btnPics] = tabButtons;
+  function setActiveTab(btn){ tabButtons.forEach(b=>b.classList.remove("bg-white/5")); btn?.classList.add("bg-white/5"); }
+  btnMovies?.addEventListener("click", () => { typeFilter="movie";   setActiveTab(btnMovies); applyFilters(); });
+  btnDocs  ?.addEventListener("click", () => { typeFilter="doc";     setActiveTab(btnDocs);   applyFilters(); });
+  btnPics  ?.addEventListener("click", () => { typeFilter="picture"; setActiveTab(btnPics);   applyFilters(); });
+
+  // Folders
+  const folderLinks = Array.from(document.querySelectorAll("#vault aside nav a"));
+  const [linkAll, linkGenre, linkRecent, linkFav] = folderLinks;
+  function setActiveFolder(a){ folderLinks.forEach(x=>x.classList.remove("bg-white/5")); a?.classList.add("bg-white/5"); }
+  linkAll  ?.addEventListener("click",(e)=>{ e.preventDefault(); folderFilter="all";       setActiveFolder(linkAll);  applyFilters(); });
+  linkGenre?.addEventListener("click",(e)=>{ e.preventDefault(); folderFilter="genre";     setActiveFolder(linkGenre);applyFilters(); });
+  linkRecent?.addEventListener("click",(e)=>{ e.preventDefault(); folderFilter="recent";   setActiveFolder(linkRecent);applyFilters(); });
+  linkFav  ?.addEventListener("click",(e)=>{ e.preventDefault(); folderFilter="favorites"; setActiveFolder(linkFav);  applyFilters(); });
+
+  // Initial state
+  setActiveTab(btnMovies);
+  setActiveFolder(linkAll);
+  applyFilters();
+});
+</script>
