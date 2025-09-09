@@ -139,24 +139,24 @@
           <img class="card-img w-full aspect-[16/9] object-cover" src="https://picsum.photos/960/540?random=101" alt="Feature A">
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
           <div class="absolute bottom-0 left-0 right-0 p-4 group-hover:translate-y-[-2px] transition">
-            <div class="text-lg font-semibold">Midnight Orbit</div>
-            <div class="text-xs text-white/70">Sci-fi adventure • 2h 11m</div>
+            <div class="text-lg font-semibold">Feature A</div>
+            <div class="text-xs text-white/70">Sci-Fi • 2h 11m</div>
           </div>
         </a>
         <a href="#play/feature-b" class="card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 hover:shadow-glow transition">
           <img class="card-img w-full aspect-[16/9] object-cover" src="https://picsum.photos/960/540?random=102" alt="Feature B">
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
           <div class="absolute bottom-0 left-0 right-0 p-4 group-hover:translate-y-[-2px] transition">
-            <div class="text-lg font-semibold">Glass Harbor</div>
-            <div class="text-xs text-white/70">Mystery drama • 1h 54m</div>
+            <div class="text-lg font-semibold">Feature B</div>
+            <div class="text-xs text-white/70">Drama • 1h 54m</div>
           </div>
         </a>
         <a href="#play/feature-c" class="card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 hover:shadow-glow transition">
           <img class="card-img w-full aspect-[16/9] object-cover" src="https://picsum.photos/960/540?random=103" alt="Feature C">
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
           <div class="absolute bottom-0 left-0 right-0 p-4 group-hover:translate-y-[-2px] transition">
-            <div class="text-lg font-semibold">Neon Drift</div>
-            <div class="text-xs text-white/70">Action thriller • 2h 03m</div>
+            <div class="text-lg font-semibold">Feature C</div>
+            <div class="text-xs text-white/70">Action • 2h 03m</div>
           </div>
         </a>
       </div>
@@ -369,4 +369,3 @@
   </script>
 </body>
 </html>
-
