@@ -5,37 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>X-Streamify — Phase 7</title>
 
-  <!-- Keep this if you already have build.css; it's fine. -->
   <link rel="stylesheet" href="build.css" />
 
-  <!-- Hard-lock visuals so cards are NOT huge (independent of Tailwind build) -->
   <style>
     :root { color-scheme: dark; }
     body{margin:0;background:#000;color:#e5e5e5;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+
     /* Pills */
     .pill{display:inline-flex;align-items:center;justify-content:center;padding:.4rem .9rem;border-radius:999px;border:2px solid #ef4444;background:transparent;color:#e5e5e5}
     .pill--active{color:#fff;border-color:#ef4444}
     .pill:hover{background:rgba(239,68,68,.08)}
+
     /* Grid (2→3→4→5 columns) */
     #grid{display:grid;gap:1.5rem;grid-template-columns:repeat(2,minmax(0,1fr))}
     @media(min-width:640px){#grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
     @media(min-width:768px){#grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
     @media(min-width:1024px){#grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+
     /* Card + poster sizing */
     .tile-card{position:relative;border-radius:14px;overflow:hidden;background:#0f0f0f;border:1px solid #222;aspect-ratio:2/3}
     .poster{width:100%;height:100%;object-fit:cover;display:block}
     .tile-title{margin-top:.5rem;font-size:.9rem;color:#d1d5db}
-    /* Heart */
-    .heart-btn{position:absolute;top:.5rem;left:.5rem;height:34px;width:34px;border-radius:999px;background:rgba(24,24,24,.75);border:1px solid #333;display:flex;align-items:center;justify-content:center}
-    .heart{width:16px;height:16px;display:inline-block;background:
-      radial-gradient(circle at 30% 30%, #d1d5db 0 45%, transparent 46%),
-      radial-gradient(circle at 70% 30%, #d1d5db 0 45%, transparent 46%),
-      linear-gradient(#d1d5db 0 0) 0 55%/100% 50% no-repeat}
-    .heart-btn.is-liked .heart{background:
-      radial-gradient(circle at 30% 30%, #ef4444 0 45%, transparent 46%),
-      radial-gradient(circle at 70% 30%, #ef4444 0 45%, transparent 46%),
-      linear-gradient(#ef4444 0 0) 0 55%/100% 50% no-repeat}
-    /* Header bits */
+
+    /* Heart button (TOP-RIGHT) */
+    .heart-btn{
+      position:absolute;top:.5rem;right:.5rem;left:auto;   /* ← right corner */
+      height:34px;width:34px;border-radius:999px;
+      background:rgba(24,24,24,.75);border:1px solid #333;
+      display:flex;align-items:center;justify-content:center
+    }
+    .heart-icon{width:18px;height:18px;display:block}
+    .heart-icon path{fill:none;stroke:#ffffff;stroke-width:2;transition:fill .15s ease, stroke .15s ease}
+    .heart-btn.is-liked .heart-icon path{fill:#ef4444;stroke:#ef4444}
+
+    /* Header */
     .header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem}
     .brand{display:flex;align-items:center;gap:.75rem}
     .brand-btn{display:inline-flex;align-items:center;justify-content:center;height:36px;width:36px;border-radius:12px;background:#dc2626}
