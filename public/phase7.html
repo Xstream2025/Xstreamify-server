@@ -9,8 +9,18 @@
 <body class="bg-black text-white">
   <!-- Header -->
   <header class="flex items-center justify-between px-6 py-4 bg-neutral-900">
-    <!-- Brand: lighter weight so it’s not too bold -->
-    <div class="text-xl font-semibold tracking-tight select-none">X-Streamify</div>
+    <!-- Brand: FULL RED SQUARE + custom tall X + wordmark -->
+    <div class="flex items-center gap-2 select-none">
+      <!-- Red square (filled) -->
+      <div class="relative inline-flex items-center justify-center w-9 h-9 rounded-lg bg-red-600">
+        <!-- Custom "tall" X drawn by hand -->
+        <svg viewBox="0 0 24 28" class="w-6 h-7" aria-hidden="true">
+          <line x1="6" y1="4" x2="18" y2="24" stroke="white" stroke-width="3" stroke-linecap="round"/>
+          <line x1="18" y1="4" x2="6" y2="24" stroke="white" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="text-xl font-semibold tracking-tight">X-Streamify</span>
+    </div>
 
     <nav class="hidden md:flex gap-6 text-sm text-neutral-300">
       <a href="#" class="hover:text-white">Featured</a>
@@ -37,7 +47,7 @@
         <button class="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700">Search</button>
       </div>
 
-      <!-- You liked these buttons — keeping them -->
+      <!-- Hero buttons -->
       <div class="flex gap-3 *:px-4 *:py-2 *:rounded-full">
         <button class="bg-neutral-800 hover:bg-neutral-700">🎬 Featured</button>
         <button class="bg-neutral-800 hover:bg-neutral-700">📚 My Library</button>
@@ -45,9 +55,12 @@
       </div>
     </div>
 
-    <!-- Right hero poster: small, with red border always visible -->
-    <div class="ml-auto rounded-2xl overflow-hidden border border-red-600 shadow-lg max-w-[380px] aspect-[2/3]">
-      <img src="img/placeholder-2x3.png" alt="Hero Poster" class="w-full h-full object-cover" />
+    <!-- Right hero poster -->
+    <div class="ml-auto relative rounded-2xl overflow-hidden border border-red-600 shadow-lg max-w-[380px] aspect-[2/3] bg-neutral-800 flex items-center justify-center">
+      <img src="img/placeholder-2x3.png" alt="Hero Poster"
+           class="w-full h-full object-cover opacity-80"
+           onerror="this.style.display='none'" />
+      <span class="absolute text-sm text-red-400 font-semibold">Poster</span>
     </div>
   </section>
 
