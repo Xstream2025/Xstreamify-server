@@ -1,8 +1,7 @@
-/* Phase 8 – Step 2: Modal + Validation (Title & Year required; Poster optional) */
+/* Phase 8 – Modal + Validation + Create & Render */
 
 (() => {
   const qs = (s, r = document) => r.querySelector(s);
-  const qsa = (s, r = document) => [...r.querySelectorAll(s)];
 
   // Elements
   const openBtn   = qs('#add-movie-btn');
@@ -23,18 +22,15 @@
 
   let lastFocus = null;
 
-  // Open / Close
+  /* -------- Open / Close -------- */
   function openModal() {
     lastFocus = document.activeElement;
     backdrop.classList.add('xsm-open');
     modal.classList.add('xsm-open');
-    // Reset state
     form.reset();
-    [errTitle, errYear, errPoster].forEach(e => e.textContent = '');
+    errTitle.textContent = errYear.textContent = errPoster.textContent = '';
     saveBtn.disabled = true;
-    // Focus first field
     setTimeout(() => inputTitle.focus(), 0);
-    // Trap focus
     document.addEventListener('keydown', onKeydown);
     document.addEventListener('focus', trapFocus, true);
   }
@@ -47,7 +43,7 @@
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
-  // Validation
+  /* -------- Validation -------- */
   const yearRE = /^(19\d{2}|20\d{2})$/; // 1900–2099
 
   function validateTitle() {
@@ -66,7 +62,7 @@
 
   function validatePoster() {
     const v = inputPoster.value.trim();
-    if (!v) { errPoster.textContent = ''; return true; } // optional
+    if (!v) { errPoster.textContent = ''; return true; }
     try {
       const u = new URL(v);
       if (!/^https?:$/.test(u.protocol)) throw new Error();
@@ -78,45 +74,97 @@
   }
 
   function updateSaveState() {
-    const ok = validateTitle() & validateYear() & validatePoster();
+    // Using bitwise AND here is fine (true=1/false=0), but make it explicit boolean:
+    const ok = Boolean(validateTitle() & validateYear() & validatePoster());
     saveBtn.disabled = !ok;
+    return ok;
   }
 
-  // Events
+  /* -------- Persist helpers -------- */
+  const LS_KEY = 'xstreamify:movies';
+
+  function loadStoredMovies() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch { return []; }
+  }
+
+  function saveStoredMovies(list) {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(list || [])); }
+    catch { /* ignore */ }
+  }
+
+  function upsertInto(arr, movie) {
+    const idx = arr.findIndex(m => m.id === movie.id);
+    if (idx >= 0) arr.splice(idx, 1); // drop duplicate
+    arr.unshift(movie);               // new first
+  }
+
+  /* -------- Create & Render -------- */
+  function onSave(e) {
+    e.preventDefault();
+    if (!updateSaveState()) return;
+
+    const title = inputTitle.value.trim();
+    const year  = parseInt(inputYear.value.trim(), 10);
+    const poster = inputPoster.value.trim();
+
+    const id = `${title.toLowerCase().replace(/\s+/g,'-')}-${year}`;
+    const movie = {
+      id,
+      title,
+      year,
+      poster: poster || '',
+      createdAt: Date.now(),
+      favorite: false
+    };
+
+    // 1) Update in-memory list if present
+    if (Array.isArray(window.movies)) {
+      upsertInto(window.movies, movie);
+    }
+
+    // 2) Ensure localStorage has the movie (so it survives refresh)
+    const stored = loadStoredMovies();
+    upsertInto(stored, movie);
+    saveStoredMovies(stored);
+
+    // 3) Try to refresh the UI immediately
+    if (typeof window.applyFilters === 'function') {
+      try { window.applyFilters(); } catch {}
+    } else if (typeof window.renderMovies === 'function') {
+      try { window.renderMovies(); } catch {}
+    }
+
+    // 4) Close the modal
+    closeModal();
+  }
+
+  /* -------- Events -------- */
   openBtn?.addEventListener('click', openModal);
   closeBtn?.addEventListener('click', closeModal);
   cancelBtn?.addEventListener('click', (e) => { e.preventDefault(); closeModal(); });
 
   backdrop?.addEventListener('click', closeModal);
-  modal?.addEventListener('click', (e) => {
-    // clicks outside card area close (backdrop already handles), ignore inside
-    // no-op
-  });
 
-  // Live validation
   [inputTitle, inputYear, inputPoster].forEach(inp => {
     inp.addEventListener('input', updateSaveState);
     inp.addEventListener('blur', updateSaveState);
   });
 
-  // Prevent submit for Step 2 (save comes in Step 3)
-  saveBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    updateSaveState();
-    // If we reach here with enabled button, we’ll wire save in Step 3.
-  });
+  saveBtn?.addEventListener('click', onSave);
 
-  // Keyboard: ESC closes, Enter attempts save, Tab trap
   function onKeydown(e) {
     if (e.key === 'Escape') { e.preventDefault(); closeModal(); }
     if (e.key === 'Enter' && document.activeElement.tagName !== 'TEXTAREA') {
-      // Let validation run; Step 3 will create
       e.preventDefault();
-      updateSaveState();
+      if (updateSaveState()) onSave(e);
     }
   }
 
-  // Focus trap
   function trapFocus(e) {
     if (!modal.classList.contains('xsm-open')) return;
     if (!modal.contains(e.target)) {
