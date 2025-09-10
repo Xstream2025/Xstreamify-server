@@ -9,13 +9,16 @@
 <body class="bg-black text-white">
   <!-- Header -->
   <header class="flex items-center justify-between px-6 py-4 bg-neutral-900">
-    <div class="text-xl font-extrabold tracking-tight">X-Streamify</div>
+    <!-- Brand: lighter weight so it’s not too bold -->
+    <div class="text-xl font-semibold tracking-tight select-none">X-Streamify</div>
+
     <nav class="hidden md:flex gap-6 text-sm text-neutral-300">
       <a href="#" class="hover:text-white">Featured</a>
       <a href="#" class="hover:text-white">My Library</a>
       <a href="#" class="hover:text-white">How It Works</a>
       <a href="#" class="hover:text-white">Your Vault</a>
     </nav>
+
     <button id="add-movie-btn"
       class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold">
       + Add New Movie
@@ -34,6 +37,7 @@
         <button class="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700">Search</button>
       </div>
 
+      <!-- You liked these buttons — keeping them -->
       <div class="flex gap-3 *:px-4 *:py-2 *:rounded-full">
         <button class="bg-neutral-800 hover:bg-neutral-700">🎬 Featured</button>
         <button class="bg-neutral-800 hover:bg-neutral-700">📚 My Library</button>
@@ -41,8 +45,8 @@
       </div>
     </div>
 
-    <!-- Right hero card (kept SMALL and clean) -->
-    <div class="ml-auto rounded-2xl overflow-hidden border border-red-600 shadow-lg max-w-[420px] aspect-[2/3]">
+    <!-- Right hero poster: small, with red border always visible -->
+    <div class="ml-auto rounded-2xl overflow-hidden border border-red-600 shadow-lg max-w-[380px] aspect-[2/3]">
       <img src="img/placeholder-2x3.png" alt="Hero Poster" class="w-full h-full object-cover" />
     </div>
   </section>

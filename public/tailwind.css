@@ -554,6 +554,10 @@ video {
   --tw-contain-style:  ;
 }
 
+.visible {
+  visibility: visible;
+}
+
 .static {
   position: static;
 }
@@ -639,6 +643,10 @@ video {
   max-width: 420px;
 }
 
+.max-w-\[380px\] {
+  max-width: 380px;
+}
+
 .flex-1 {
   flex: 1 1 0%;
 }
@@ -649,6 +657,12 @@ video {
 
 .cursor-pointer {
   cursor: pointer;
+}
+
+.select-none {
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
 }
 
 .list-inside {
