@@ -3,71 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>X-Streamify — Phase 7</title>
+  <title>X-Streamify — Phase 7 Sandbox</title>
   <link href="./tailwind.css" rel="stylesheet" />
-  <style>
-    /* ---- Pills ----------------------------------------------------------- */
-    .p7-pill,
-    .p7-pill:focus,
-    .p7-pill:focus-visible {
-      outline: none !important;
-      box-shadow: none !important;
-    }
-    .p7-pill {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.75rem;
-      background: #000;                /* pitch black interior */
-      border: 1px solid transparent;   /* no default border */
-      color: #fff;
-      user-select: none;
-    }
-    /* Crisp solid red outline only when active (no inner fill/glow) */
-    .p7-pill-active::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      box-shadow: 0 0 0 1.5px #ef4444; /* the red outline */
-      pointer-events: none;
-    }
-
-    /* ---- Add button (explicit border, no ring trick) -------------------- */
-    #p7-add-btn {
-      background: #000;                 /* pitch black */
-      border: 1.5px solid #ef4444;      /* crisp solid red */
-      border-radius: 0.75rem;
-      padding: 0.4rem 0.8rem;
-      color: #fff;
-      box-shadow: none !important;      /* prevent any glow */
-    }
-    #p7-add-btn:hover { border-color: #f87171; }
-
-    /* ---- Logo box and X -------------------------------------------------- */
-    .p7-logo {
-      height: 2rem; width: 2rem; border-radius: 0.6rem;
-      background: radial-gradient(70% 70% at 50% 45%, #ef4444 0%, #dc2626 60%, #b91c1c 100%);
-      box-shadow:
-        0 0 0 1px rgba(239,68,68,.35),
-        0 0 18px rgba(239,68,68,.18);
-      display: grid; place-items: center;
-    }
-    .p7-logo-x {
-      color: #fff; font-weight: 900; font-size: 0.95rem; line-height: 1;
-      filter: drop-shadow(0 1px 1px rgba(0,0,0,.40));
-      transform: translateY(1px);
-    }
-  </style>
 </head>
 <body class="bg-black text-white">
-  <!-- Header -->
   <header class="w-full border-b border-red-500/40 sticky top-0 z-40 bg-black/80 backdrop-blur">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="p7-logo"><span class="p7-logo-x">X</span></div>
+        <div class="h-8 w-8 rounded-lg bg-red-600"></div>
         <span class="text-xl font-bold tracking-tight">X-Streamify — Phase 7</span>
       </div>
       <a href="./index.html" class="text-sm opacity-80 hover:opacity-100">← Back to main app</a>
@@ -76,42 +19,24 @@
 
   <!-- Controls -->
   <section class="max-w-7xl mx-auto px-4 py-6">
-    <div class="flex flex-wrap items-center gap-2">
-      <div class="relative flex-1 min-w-[260px]">
-        <input id="p7-search" type="text" placeholder="Search your library…"
-               class="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-4 py-2.5 outline-none focus:border-red-500" />
-      </div>
-
-      <!-- Result-count chip -->
-      <span id="p7-count-chip"
-            class="px-2.5 py-1 rounded-xl border border-zinc-800 text-xs text-white/70 select-none">0</span>
-
-      <!-- Filter pills -->
-      <button data-filter="all"    id="p7-pill-all"    class="p7-pill">All</button>
-      <button data-filter="recent" id="p7-pill-recent" class="p7-pill">Recently Added</button>
-      <button data-filter="favs"   id="p7-pill-favs"   class="p7-pill">Favorites</button>
+    <div class="flex flex-wrap gap-2 items-center">
+      <input id="p7-search" type="text" placeholder="Search your library…"
+             class="flex-1 min-w-[220px] bg-zinc-900/80 border border-zinc-800 rounded-xl px-4 py-2.5 outline-none focus:border-red-500" />
+      <button data-filter="all"    class="p7-pill px-3 py-2 rounded-xl border border-zinc-800 hover:border-red-500 text-sm">All</button>
+      <button data-filter="recent" class="p7-pill px-3 py-2 rounded-xl border border-zinc-800 hover:border-red-500 text-sm">Recently Added</button>
+      <button data-filter="favs"   class="p7-pill px-3 py-2 rounded-xl border border-zinc-800 hover:border-red-500 text-sm">Favorites</button>
     </div>
   </section>
 
   <!-- Featured -->
   <section class="max-w-7xl mx-auto px-4 py-2">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-xl font-semibold">Featured</h2>
-      <span class="text-xs text-white/50">Auto-picked from library</span>
-    </div>
+    <h2 class="text-xl font-semibold mb-3">Featured</h2>
     <div id="p7-featured" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
   </section>
 
-  <!-- My Library -->
+  <!-- Library -->
   <section class="max-w-7xl mx-auto px-4 py-6">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-xl font-semibold">My Library (Sandbox)</h2>
-      <div class="flex items-center gap-2">
-        <button id="p7-add-btn">Add New Movie</button>
-        <input id="p7-file" type="file" accept="video/*" class="hidden" />
-      </div>
-    </div>
-
+    <h2 class="text-xl font-semibold mb-3">My Library (Sandbox)</h2>
     <div id="p7-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>
     <p id="p7-empty" class="hidden mt-3 text-white/60 text-sm">No results.</p>
   </section>

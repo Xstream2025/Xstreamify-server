@@ -1,19 +1,26 @@
+// Phase 7 sandbox page — standalone. Reads hearts from xsf_favs_v1.
+// Stores movies in xsf_library_v1 (sample + uploads). Does NOT touch your main page.
+
 const LIB_KEY = "xsf_library_v1";
 const FAVS_KEY = "xsf_favs_v1";
 
 const seed = [
-  { id: "m1", title: "Spirited Away",       year: 2001, featured: true,  addedAt: "2025-08-25" },
-  { id: "m2", title: "Interstellar",        year: 2014, featured: true,  addedAt: "2025-09-05" },
-  { id: "m3", title: "The Dark Knight",     year: 2008, featured: true,  addedAt: "2025-09-01" },
-  { id: "m4", title: "Arrival",             year: 2016, featured: false, addedAt: "2025-09-07" },
-  { id: "m5", title: "Whiplash",            year: 2014, featured: false, addedAt: "2025-08-15" },
-  { id: "m6", title: "Blade Runner 2049",   year: 2017, featured: false, addedAt: "2025-09-02" }
+  { id: "m1", title: "Spirited Away", year: 2001, featured: true,  addedAt: "2025-08-25" },
+  { id: "m2", title: "Interstellar",  year: 2014, featured: true,  addedAt: "2025-09-05" },
+  { id: "m3", title: "The Dark Knight", year: 2008, featured: true, addedAt: "2025-09-01" },
+  { id: "m4", title: "Arrival",       year: 2016, featured: false, addedAt: "2025-09-07" },
+  { id: "m5", title: "Whiplash",      year: 2014, featured: false, addedAt: "2025-08-15" },
+  { id: "m6", title: "Blade Runner 2049", year: 2017, featured: false, addedAt: "2025-09-02" }
 ];
 
+// Load library from localStorage; if missing OR empty, restore seed
 function loadLib() {
   try {
     const raw = localStorage.getItem(LIB_KEY);
-    if (!raw) { localStorage.setItem(LIB_KEY, JSON.stringify(seed)); return [...seed]; }
+    if (!raw) {
+      localStorage.setItem(LIB_KEY, JSON.stringify(seed));
+      return [...seed];
+    }
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) {
       localStorage.setItem(LIB_KEY, JSON.stringify(seed));
@@ -25,8 +32,13 @@ function loadLib() {
     return [...seed];
   }
 }
-function saveLib(list) { localStorage.setItem(LIB_KEY, JSON.stringify(list)); }
-function getFavs() { try { return new Set(JSON.parse(localStorage.getItem(FAVS_KEY) || "[]")); } catch { return new Set(); } }
+function saveLib(list) {
+  localStorage.setItem(LIB_KEY, JSON.stringify(list));
+}
+function getFavs() {
+  try { return new Set(JSON.parse(localStorage.getItem(FAVS_KEY) || "[]")); }
+  catch { return new Set(); }
+}
 
 let library = loadLib();
 
@@ -40,14 +52,9 @@ const search      = $("#p7-search");
 const pills       = $$(".p7-pill");
 const fileInput   = $("#p7-file");
 const addBtn      = $("#p7-add-btn");
-
-function setActivePill(name) {
-  pills.forEach(b => b.classList.remove("p7-pill-active"));
-  const idMap = { all: "#p7-pill-all", recent: "#p7-pill-recent", favs: "#p7-pill-favs" };
-  const btn = document.querySelector(idMap[name] || idMap.all);
-  if (btn) btn.classList.add("p7-pill-active");
-}
-function updateCount(n) { const chip = document.getElementById("p7-count-chip"); if (chip) chip.textContent = String(n); }
+const modal       = $("#p7-modal");
+const modalClose  = $("#p7-modal-close");
+const importDisc  = $("#p7-import-disc");
 
 function poster(letter) {
   return `
@@ -56,6 +63,7 @@ function poster(letter) {
       ${letter}
     </div>`;
 }
+
 function card(m) {
   const favs = getFavs();
   const isFav = favs.has(m.id);
@@ -65,7 +73,9 @@ function card(m) {
       <div class="relative">
         ${poster((m.title || "?").charAt(0))}
         <button data-id="${m.id}"
-                class="absolute top-2 right-2 text-xl ${isFav ? "text-red-500" : "text-white/40"} p7-fav">♥</button>
+                class="absolute top-2 right-2 text-xl ${isFav ? "text-red-500" : "text-white/40"} p7-fav">
+          ♥
+        </button>
       </div>
       <div class="p-2 text-sm">
         <div class="font-semibold">${m.title}</div>
@@ -82,19 +92,21 @@ function renderGrid(list) {
   if (!list.length) {
     grid.innerHTML = "";
     empty.classList.remove("hidden");
-  } else {
-    empty.classList.add("hidden");
-    grid.innerHTML = list.map(card).join("");
+    return;
   }
-  updateCount(list.length);
+  empty.classList.add("hidden");
+  grid.innerHTML = list.map(card).join("");
 }
 
-let state = { q: "", filter: "all" };
+// ---- State + filter (applies to BOTH Featured and Library)
+let state = { q: "", filter: "all" }; // all|recent|favs
 
 function computeList() {
   let list = [...library];
   const q = state.q.toLowerCase();
+
   if (q) list = list.filter(m => (m.title || "").toLowerCase().includes(q));
+
   if (state.filter === "recent") {
     list.sort((a,b) => new Date(b.addedAt || 0) - new Date(a.addedAt || 0));
   } else if (state.filter === "favs") {
@@ -103,13 +115,14 @@ function computeList() {
   }
   return list;
 }
+
 function apply() {
-  setActivePill(state.filter);
   const list = computeList();
   renderFeatured(list);
   renderGrid(list);
 }
 
+// ---- Events
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("p7-fav")) {
     const id = e.target.getAttribute("data-id");
@@ -120,19 +133,33 @@ document.addEventListener("click", (e) => {
   }
 });
 
-search.addEventListener("input", (e) => { state.q = e.target.value.trim(); apply(); });
+search.addEventListener("input", (e) => {
+  state.q = e.target.value.trim();
+  apply();
+});
 search.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") { state.q = ""; search.value = ""; state.filter = "all"; apply(); }
+  if (e.key === "Escape") {
+    state.q = "";
+    search.value = "";
+    state.filter = "all";
+    apply();
+  }
 });
 
-pills.forEach(b => b.addEventListener("click", () => {
-  const f = b.dataset.filter || "all";
-  state.filter = f;
-  if (f === "all") { state.q = ""; search.value = ""; }
-  apply();
-}));
+pills.forEach(b =>
+  b.addEventListener("click", () => {
+    const f = b.dataset.filter;
+    state.filter = f || "all";
+    if (state.filter === "all") {
+      state.q = "";
+      search.value = "";
+    }
+    apply();
+  })
+);
 
 addBtn.addEventListener("click", () => fileInput.click());
+
 fileInput.addEventListener("change", (e) => {
   const f = e.target.files?.[0];
   if (!f) return;
@@ -146,20 +173,13 @@ fileInput.addEventListener("change", (e) => {
   fileInput.value = "";
 });
 
-/* ---------- Keyboard shortcuts ---------- */
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Alt") {                 // Reset with Alt
-    state.q = "";
-    search.value = "";
-    state.filter = "all";
-    apply();
-    return;
-  }
-  if (e.target === search) return;       // don't hijack typing in the search box
-  if (e.key.toLowerCase() === "a") { state.filter = "all";    state.q=""; search.value=""; apply(); }
-  if (e.key.toLowerCase() === "r") { state.filter = "recent"; apply(); }
-  if (e.key.toLowerCase() === "f") { state.filter = "favs";   apply(); }
+importDisc?.addEventListener("click", () => {
+  modal.classList.remove("hidden"); modal.classList.add("flex");
+});
+modalClose?.addEventListener("click", () => {
+  modal.classList.add("hidden"); modal.classList.remove("flex");
 });
 
+// init
 renderFeatured();
 apply();
