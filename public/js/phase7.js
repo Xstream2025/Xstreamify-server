@@ -77,7 +77,6 @@ function attachLikeHandlers(scope, container) {
       const i = arr.indexOf(id);
       if (i === -1) arr.push(id); else arr.splice(i, 1);
       saveFavs(sc === "featured" ? FAV_FEAT_KEY : FAV_SAND_KEY, arr);
-      // re-render only the affected section
       if (sc === "featured") renderFeatured(); else apply();
     });
   });
@@ -92,7 +91,7 @@ function renderFeatured() {
   attachLikeHandlers("featured", node);
 }
 
-/* Filter predicate for sandbox */
+/* Sandbox filter */
 function currentFilterPredicate() {
   const q = (si()?.value || "").trim().toLowerCase();
   return (m) => {
@@ -123,7 +122,7 @@ function apply() {
   setActivePill();
 }
 
-/* Pills */
+/* Pills (make active one bolder; all start with same base look in HTML) */
 function setActivePill() {
   const map = { all:"#pillAll", recent:"#pillRecent", favorites:"#pillFav" };
   Object.entries(map).forEach(([k, sel]) => {
@@ -132,7 +131,7 @@ function setActivePill() {
     const on = k === activeFilter;
     el.classList.toggle("ring-2", on);
     el.classList.toggle("ring-red-500", on);
-    el.classList.toggle("text-white", on);
+    el.classList.toggle("bg-red-500/10", on);
   });
 }
 
