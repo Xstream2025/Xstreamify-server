@@ -146,5 +146,20 @@ fileInput.addEventListener("change", (e) => {
   fileInput.value = "";
 });
 
+/* ---------- Keyboard shortcuts ---------- */
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Alt") {                 // Reset with Alt
+    state.q = "";
+    search.value = "";
+    state.filter = "all";
+    apply();
+    return;
+  }
+  if (e.target === search) return;       // don't hijack typing in the search box
+  if (e.key.toLowerCase() === "a") { state.filter = "all";    state.q=""; search.value=""; apply(); }
+  if (e.key.toLowerCase() === "r") { state.filter = "recent"; apply(); }
+  if (e.key.toLowerCase() === "f") { state.filter = "favs";   apply(); }
+});
+
 renderFeatured();
 apply();
