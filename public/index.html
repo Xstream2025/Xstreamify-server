@@ -1,381 +1,69 @@
 ﻿<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>X-Streamify — Build your personal streaming library.</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: { netflix: { red: "#E50914", dark: "#141414" } },
-            boxShadow: { glow: "0 0 30px rgba(229, 9, 20, 0.35)" }
-          }
-        }
-      }
-    </script>
-    <style>
-      .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-
-      /* Hover + tooltip styles */
-      .poster-tile img {
-        transition: transform 0.3s ease;
-      }
-      .poster-tile:hover img {
-        transform: scale(1.08);
-      }
-      .poster-tile {
-        position: relative;
-      }
-      .poster-tile::after {
-        content: attr(data-title);
-        position: absolute;
-        bottom: 6px;
-        left: 6px;
-        right: 6px;
-        background: rgba(0,0,0,0.7);
-        color: white;
-        font-size: 0.75rem;
-        padding: 2px 4px;
-        border-radius: 4px;
-        opacity: 0;
-        transform: translateY(4px);
-        transition: opacity 0.2s ease, transform 0.2s ease;
-        pointer-events: none;
-      }
-      .poster-tile:hover::after {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    </style>
-  </head>
-  <body class="bg-black text-white antialiased">
-
-    <!-- Header -->
-    <header class="sticky top-0 z-50 bg-black/80 backdrop-blur border-b border-white/10">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex h-16 items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="h-7 w-7 rounded bg-[rgba(229,9,20,0.15)] ring-1 ring-red-600/60 shadow-glow grid place-items-center">
-              <span class="text-lg font-black tracking-tight text-red-500">X</span>
-            </div>
-            <span class="text-lg sm:text-xl font-semibold tracking-tight">X-Streamify</span>
-          </div>
-          <nav class="hidden md:flex items-center gap-6 text-sm">
-            <a class="opacity-90 hover:opacity-100 transition" href="#featured">Featured</a>
-            <a class="opacity-90 hover:opacity-100 transition" href="#mylibrary">My Library</a>
-            <a class="opacity-90 hover:opacity-100 transition" href="#how">How It Works</a>
-            <a class="opacity-90 hover:opacity-100 transition" href="#vault">Your Vault</a>
-          </nav>
-          <div class="flex items-center gap-3">
-            <a href="#add" class="hidden sm:inline-flex items-center rounded-2xl px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 transition shadow-glow">
-              Add Movies
-            </a>
-            <button id="burger" class="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-white/10">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
-                <path fill-rule="evenodd" d="M3.75 6.75A.75.75 0 0 1 4.5 6h15a.75.75 0 0 1 0 1.5h-15a.75.75 0 0 1-.75-.75ZM3.75 12a.75.75 0 0 1 .75-.75h15a.75.75 0 0 1 0 1.5h-15A.75.75 0 0 1 3.75 12Zm0 5.25a.75.75 0 0 1 .75-.75h15a.75.75 0 0 1 0 1.5h-15a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phase 7 Sandbox</title>
+  <link rel="stylesheet" href="/tailwind.css" />
+  <!-- Remove this line if you want to silence the 404 for now -->
+  <link rel="icon" href="/favicon.ico" />
+</head>
+<body class="bg-black text-white min-h-screen">
+  <!-- Header -->
+  <header class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <!-- Red square with bold, rounded X -->
+      <div class="h-8 w-8 rounded bg-red-600 grid place-items-center">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+          <rect x="4" y="10.5" width="16" height="3.2" rx="1.6" transform="rotate(45 4 10.5)" fill="white"/>
+          <rect x="4" y="10.5" width="16" height="3.2" rx="1.6" transform="rotate(-45 4 10.5)" fill="white"/>
+        </svg>
       </div>
-      <!-- Mobile dropdown -->
-      <div id="mobileMenu" class="hidden md:hidden">
-        <div class="w-screen max-w-none">
-          <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="mt-2 rounded-2xl ring-1 ring-white/10 bg-zinc-900/95 overflow-hidden shadow-glow safe-bottom">
-              <div class="flex flex-col divide-y divide-white/10">
-                <a href="#featured" class="px-4 py-4 text-base hover:bg-white/5">Featured</a>
-                <a href="#mylibrary" class="px-4 py-4 text-base hover:bg-white/5">My Library</a>
-                <a href="#how" class="px-4 py-4 text-base hover:bg-white/5">How It Works</a>
-                <a href="#vault" class="px-4 py-4 text-base hover:bg-white/5">Your Vault</a>
-                <a href="#add" class="px-4 py-4 text-base font-semibold text-red-400 hover:bg-white/5">Add Movies</a>
-              </div>
-              <div class="w-full h-0.5 sm:h-1 bg-red-600"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+      <div class="text-xl font-bold tracking-tight">X-Streamify — Phase 7</div>
+    </div>
+    <div class="flex items-center gap-3">
+      <input id="fileInput" type="file" accept=".mp4,.mkv,.avi,.mov,.m4v,.jpg,.jpeg,.png" class="hidden" />
+      <label for="fileInput" class="cursor-pointer px-3 py-2 rounded-xl border border-white/20 hover:bg-white/10 transition">
+        ➕ Add New Movie
+      </label>
+    </div>
+  </header>
 
-    <!-- Hero -->
-    <section class="relative">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div>
-            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight">Build your personal streaming library.</h1>
-            <p class="mt-4 text-white/70 max-w-xl">Import your discs or files and stream your own collection anywhere. Your Movies. Your Stream. Anytime.</p>
-            <div class="mt-6 flex flex-col sm:flex-row gap-3">
-              <input type="text" placeholder="Search your library…" class="w-full sm:w-80 rounded-xl bg-white/5 ring-1 ring-white/10 px-4 py-3 placeholder-white/40 focus:outline-none focus:ring-red-600" />
-              <div class="flex gap-2">
-                <a href="#featured" class="inline-flex items-center rounded-xl px-3 py-2 ring-1 ring-white/10 bg-white/5 hover:bg-white/10 text-sm">Featured</a>
-                <a href="#add" class="inline-flex items-center rounded-xl px-3 py-2 ring-1 ring-red-600 bg-red-600/10 hover:bg-red-600/20 text-sm">Add Movies</a>
-              </div>
-            </div>
-          </div>
-          <div class="relative">
-            <div class="rounded-3xl overflow-hidden ring-1 ring-red-600/40 shadow-glow" data-hero-fav>
-              <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1974&auto=format&fit=crop" alt="Cinema seats" class="w-full h-64 sm:h-80 lg:h-[420px] object-cover" />
-            </div>
-          </div>
-        </div>
+  <!-- Main -->
+  <main class="max-w-7xl mx-auto px-4 pb-12">
+    <!-- Search + Pills -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+      <div class="flex items-center gap-3 flex-1">
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Search…"
+          class="w-full md:w-96 px-3 py-2 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-red-500"
+        />
+        <span id="resultCount" class="text-sm text-white/70">0</span>
       </div>
-    </section>
+      <div class="flex items-center gap-2">
+        <!-- All pills start with the same base look -->
+        <button id="pillAll"    class="px-3 py-1 rounded-full border border-red-500/70 text-red-200 ring-1 ring-red-500/40 hover:bg-red-500/10">All</button>
+        <button id="pillRecent" class="px-3 py-1 rounded-full border border-red-500/70 text-red-200 ring-1 ring-red-500/40 hover:bg-red-500/10">Recently Added</button>
+        <button id="pillFav"    class="px-3 py-1 rounded-full border border-red-500/70 text-red-200 ring-1 ring-red-500/40 hover:bg-red-500/10">Favorites</button>
+      </div>
+    </div>
 
     <!-- Featured -->
-    <section id="featured" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl font-semibold">Featured</h2>
-        <a href="#" class="text-sm text-white/70 hover:text-white">See all</a>
-      </div>
-      <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
-        <div class="poster-tile aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10" data-title="Inception"></div>
-        <div class="poster-tile aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10" data-title="Interstellar"></div>
-        <div class="poster-tile aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10" data-title="The Dark Knight"></div>
-      </div>
+    <section class="mb-10">
+      <h2 class="mb-3 font-semibold tracking-wide text-white/80">Featured</h2>
+      <div id="featuredRow" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
     </section>
 
-    <!-- My Library -->
-    <section id="mylibrary" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <h2 class="text-xl font-semibold">My Library</h2>
-      <div class="mt-4 grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-3">
-        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 1"></div>
-        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 2"></div>
-        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 3"></div>
-        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 4"></div>
-        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 5"></div>
-        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 6"></div>
-        <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Movie 7"></div>
-      </div>
+    <!-- Sandbox -->
+    <section>
+      <h2 class="mb-3 font-semibold tracking-wide text-white/80">Sandbox</h2>
+      <div id="emptyState" class="hidden text-white/60 text-sm px-2 py-8 text-center">No matches. Try a different search.</div>
+      <div id="sandboxRow" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
     </section>
+  </main>
 
-    <!-- How It Works -->
-    <section id="how" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <h2 class="text-xl font-semibold">How It Works</h2>
-      <ol class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-        <li class="p-4 rounded-xl ring-1 ring-white/10 bg-white/5">1) Import your disc or upload your file</li>
-        <li class="p-4 rounded-xl ring-1 ring-white/10 bg-white/5">2) We store it securely in your Vault</li>
-        <li class="p-4 rounded-xl ring-1 ring-white/10 bg-white/5">3) Stream anywhere, anytime</li>
-      </ol>
-    </section>
-
-    <!-- Add a New Movie -->
-    <section id="add" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <h2 class="text-xl font-semibold">Add a New Movie</h2>
-      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="p-5 rounded-2xl ring-1 ring-white/10 bg-white/5 hover:bg-white/10 transition">
-          <h3 class="font-semibold">Import Disc</h3>
-          <p class="mt-1 text-white/70 text-sm">Use our X-StreamPort to ingest your DVD/Blu-ray.</p>
-        </div>
-        <div class="p-5 rounded-2xl ring-1 ring-white/10 bg-white/5 hover:bg-white/10 transition">
-          <h3 class="font-semibold">Upload File</h3>
-          <p class="mt-1 text-white/70 text-sm">Drag & drop a movie file from your device.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Vault -->
-    <section id="vault" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl font-semibold">Your Vault</h2>
-      </div>
-      <div class="mt-4 flex gap-2 text-sm">
-        <button class="px-3 py-2 rounded-xl ring-1 ring-white/10 bg-white/5">Movies</button>
-        <button class="px-3 py-2 rounded-xl ring-1 ring-white/10">Docs</button>
-        <button class="px-3 py-2 rounded-xl ring-1 ring-white/10">Pictures</button>
-      </div>
-      <div class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <aside class="lg:col-span-1">
-          <div class="rounded-2xl ring-1 ring-white/10">
-            <div class="p-4 border-b border-white/10 font-medium">Folders</div>
-            <nav class="p-2 text-sm">
-              <a class="block px-3 py-2 rounded-lg hover:bg-white/5" href="#">All</a>
-              <a class="block px-3 py-2 rounded-lg hover:bg-white/5" href="#">By Genre</a>
-              <a class="block px-3 py-2 rounded-lg hover:bg-white/5" href="#">Recently Added</a>
-              <a class="block px-3 py-2 rounded-lg hover:bg-white/5" href="#">Favorites</a>
-            </nav>
-          </div>
-        </aside>
-        <div class="lg:col-span-3">
-          <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-3">
-            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 1"></div>
-            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 2"></div>
-            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 3"></div>
-            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 4"></div>
-            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 5"></div>
-            <div class="poster-tile aspect-[2/3] rounded bg-white/5 ring-1 ring-white/10" data-title="Vault Movie 6"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="border-t border-white/10 py-10 text-center text-sm text-white/60">
-      © <span id="year"></span> X-Streamify. Your Movies. Your Stream. Anytime.
-    </footer>
-
-    <!-- Script #1 — posters + fallback + add-movie -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const FALLBACK = "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg";
-  const FEATURED = [
-    "https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg",
-    "https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",
-    "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg"
-  ];
-  const LIBRARY = [
-    "https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg",
-    "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
-    "https://image.tmdb.org/t/p/w500/62HCnUTziyWcpDaBO2i1DX17ljH.jpg",
-    "https://image.tmdb.org/t/p/w500/8GxS2hZT0Pq3GkVhXEBKJdXL0u4.jpg",
-    "https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg",
-    "https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
-    "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg"
-  ];
-
-  function putImg(tile, url, title="") {
-    if (!tile || tile.querySelector("img")) return;
-    tile.classList.add("poster-tile");               // enable hover + tooltip
-    if (title) tile.setAttribute("data-title", title);
-    const img = document.createElement("img");
-    img.src = url; img.alt = title; img.loading = "lazy";
-    img.className = "w-full h-full object-cover";
-    img.onerror = () => { img.onerror = null; img.src = FALLBACK; };
-    tile.appendChild(img);
-  }
-
-  // Fill placeholders ONLY if empty
-  const featuredTitles = ["Inception","Interstellar","The Dark Knight"];
-  document.querySelectorAll("#featured .grid > div")
-    .forEach((t,i)=>FEATURED[i]&&putImg(t,FEATURED[i], featuredTitles[i]||""));
-
-  const libTitles = ["Movie 1","Movie 2","Movie 3","Movie 4","Movie 5","Movie 6","Movie 7"];
-  document.querySelectorAll("#mylibrary .grid > div")
-    .forEach((t,i)=>LIBRARY[i]&&putImg(t,LIBRARY[i], libTitles[i]||""));
-
-  // Add-section (adds, never replaces)
-  const addSection = document.querySelector("#add");
-  const myLibGrid = document.querySelector("#mylibrary .grid");
-  function makeCard(url, title="Custom Upload"){
-    const d=document.createElement("div");
-    d.className="poster-tile aspect-[2/3] rounded-xl bg-white/5 ring-1 ring-white/10 overflow-hidden";
-    d.setAttribute("data-title", title);
-    const img=document.createElement("img");
-    img.src=url; img.className="w-full h-full object-cover"; img.loading="lazy";
-    img.onerror=()=>{img.onerror=null; img.src=FALLBACK;};
-    d.appendChild(img); return d;
-  }
-  if(addSection && myLibGrid){
-    const cards = addSection.querySelectorAll(".grid > div");
-    cards[0]?.addEventListener("click", ()=>{
-      myLibGrid.insertBefore(makeCard(FALLBACK, "Imported Disc"), myLibGrid.firstChild);
-      location.hash="#mylibrary";
-    });
-    cards[1]?.addEventListener("click", ()=>{
-      const t=prompt("Movie title:"); if(!t) return;
-      const p=prompt("Poster image URL (https://…):","https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg"); if(!p) return;
-      myLibGrid.insertBefore(makeCard(p, t), myLibGrid.firstChild);
-      location.hash="#mylibrary";
-    });
-  }
-
-  // Year + burger
-  const y=document.getElementById("year"); if(y) y.textContent=new Date().getFullYear();
-  const b=document.getElementById("burger"), m=document.getElementById("mobileMenu");
-  b?.addEventListener("click", ()=>m.classList.toggle("hidden"));
-});
-</script>
-
-<!-- Script #2 — Vault tabs + folder filters (seed + fallbacks + hover/tooltip) -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const FALLBACK_V = "https://image.tmdb.org/t/p/w500/ynXoOxmDHNQ4UAy0oU6avW71HVW.jpg";
-  function applyVaultFallbacks(root) {
-    root.querySelectorAll("img").forEach(img => {
-      img.onerror = () => { img.onerror = null; img.src = FALLBACK_V; };
-    });
-  }
-
-  // Items grid on the right
-  const vaultItemsGrid =
-    document.querySelector('#vault .lg\\:col-span-3 .grid') ||
-    document.querySelectorAll('#vault .grid')[document.querySelectorAll('#vault .grid').length - 1];
-  if (!vaultItemsGrid) return;
-
-  // Seed posters for visibility
-  const demoPosters = [
-    ["Inception","https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg"],
-    ["Interstellar","https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg"],
-    ["The Dark Knight","https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg"],
-    ["Dune","https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg"],
-    ["Oppenheimer (Doc)","https://image.tmdb.org/t/p/w500/8GxS2hZT0Pq3GkVhXEBKJdXL0u4.jpg"],
-    ["Avatar (Picture)","https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg"]
-  ];
-  Array.from(vaultItemsGrid.children).forEach((tile, i) => {
-    if (!tile.querySelector("img") && demoPosters[i]) {
-      const [title, url] = demoPosters[i];
-      tile.classList.add("poster-tile","overflow-hidden","rounded-xl","bg-white/5","ring-1","ring-white/10");
-      tile.setAttribute("data-title", title);
-      tile.innerHTML = `<img src="${url}" alt="${title}" class="w-full h-full object-cover" loading="lazy">`;
-    } else {
-      tile.classList.add("poster-tile");
-      if (!tile.getAttribute("data-title")) tile.setAttribute("data-title","Vault Item");
-    }
-  });
-  applyVaultFallbacks(vaultItemsGrid);
-
-  // Collect tiles + tag metadata
-  const tiles = Array.from(vaultItemsGrid.children);
-  tiles.forEach((t, i) => {
-    if (!t.dataset.type)     t.dataset.type = i < tiles.length - 2 ? "movie" : (i === tiles.length - 2 ? "doc" : "picture");
-    if (!t.dataset.favorite) t.dataset.favorite = (i % 2 === 0) ? "1" : "0";
-    if (!t.dataset.addedAt)  t.dataset.addedAt = String(tiles.length - i);
-  });
-
-  // Filters
-  let typeFilter = "all";
-  let folderFilter = "all";
-
-  function applyFilters() {
-    tiles.forEach((t) => {
-      let show = true;
-      if (typeFilter !== "all" && t.dataset.type !== typeFilter) show = false;
-      if (folderFilter === "favorites" && t.dataset.favorite !== "1") show = false;
-      if (folderFilter === "recent" && Number(t.dataset.addedAt) > 5) show = false;
-      t.classList.toggle("hidden", !show);
-    });
-  }
-
-  // Tabs (Movies / Docs / Pictures)
-  const tabButtons = Array.from(document.querySelectorAll("#vault .mt-4.flex button"));
-  const [btnMovies, btnDocs, btnPics] = tabButtons;
-  function setActiveTab(btn){ tabButtons.forEach(b=>b.classList.remove("bg-white/5")); btn?.classList.add("bg-white/5"); }
-  btnMovies?.addEventListener("click", () => { typeFilter="movie";   setActiveTab(btnMovies); applyFilters(); });
-  btnDocs  ?.addEventListener("click", () => { typeFilter="doc";     setActiveTab(btnDocs);   applyFilters(); });
-  btnPics  ?.addEventListener("click", () => { typeFilter="picture"; setActiveTab(btnPics);   applyFilters(); });
-
-  // Folders (All / By Genre / Recently Added / Favorites)
-  const folderLinks = Array.from(document.querySelectorAll("#vault aside nav a"));
-  const [linkAll, linkGenre, linkRecent, linkFav] = folderLinks;
-  function setActiveFolder(a){ folderLinks.forEach(x=>x.classList.remove("bg-white/5")); a?.classList.add("bg-white/5"); }
-  linkAll  ?.addEventListener("click",(e)=>{ e.preventDefault(); folderFilter="all";       setActiveFolder(linkAll);  applyFilters(); });
-  linkGenre?.addEventListener("click",(e)=>{ e.preventDefault(); folderFilter="genre";     setActiveFolder(linkGenre);applyFilters(); });
-  linkRecent?.addEventListener("click",(e)=>{ e.preventDefault(); folderFilter="recent";   setActiveFolder(linkRecent);applyFilters(); });
-  linkFav  ?.addEventListener("click",(e)=>{ e.preventDefault(); folderFilter="favorites"; setActiveFolder(linkFav);  applyFilters(); });
-
-  // Initial state
-  setActiveTab(btnMovies);
-  setActiveFolder(linkAll);
-  applyFilters();
-});
-</script>
-<script src="/xsf-favorites.js?v=failsafe1"></script>
+  <script src="/js/phase7.js" defer></script>
 </body>
 </html>
-
-
-
-
-
-
