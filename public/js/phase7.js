@@ -32,13 +32,8 @@ function loadLib() {
     return [...seed];
   }
 }
-function saveLib(list) {
-  localStorage.setItem(LIB_KEY, JSON.stringify(list));
-}
-function getFavs() {
-  try { return new Set(JSON.parse(localStorage.getItem(FAVS_KEY) || "[]")); }
-  catch { return new Set(); }
-}
+function saveLib(list) { localStorage.setItem(LIB_KEY, JSON.stringify(list)); }
+function getFavs() { try { return new Set(JSON.parse(localStorage.getItem(FAVS_KEY) || "[]")); } catch { return new Set(); } }
 
 let library = loadLib();
 
@@ -54,7 +49,18 @@ const fileInput   = $("#p7-file");
 const addBtn      = $("#p7-add-btn");
 const modal       = $("#p7-modal");
 const modalClose  = $("#p7-modal-close");
-const importDisc  = $("#p7-import-disc");
+
+// --- UI helpers
+function setActivePill(name) {
+  pills.forEach(b => b.classList.remove("ring-1","ring-red-500","border-red-500","bg-red-600/20"));
+  const el = { all: "#p7-pill-all", recent: "#p7-pill-recent", favs: "#p7-pill-favs" }[name] || "#p7-pill-all";
+  const btn = document.querySelector(el);
+  if (btn) btn.classList.add("ring-1","ring-red-500","border-red-500","bg-red-600/20");
+}
+function updateCount(n) {
+  const c = document.getElementById("p7-count");
+  if (c) c.textContent = String(n);
+}
 
 function poster(letter) {
   return `
@@ -63,7 +69,6 @@ function poster(letter) {
       ${letter}
     </div>`;
 }
-
 function card(m) {
   const favs = getFavs();
   const isFav = favs.has(m.id);
@@ -92,10 +97,11 @@ function renderGrid(list) {
   if (!list.length) {
     grid.innerHTML = "";
     empty.classList.remove("hidden");
-    return;
+  } else {
+    empty.classList.add("hidden");
+    grid.innerHTML = list.map(card).join("");
   }
-  empty.classList.add("hidden");
-  grid.innerHTML = list.map(card).join("");
+  updateCount(list.length);
 }
 
 // ---- State + filter (applies to BOTH Featured and Library)
@@ -106,7 +112,6 @@ function computeList() {
   const q = state.q.toLowerCase();
 
   if (q) list = list.filter(m => (m.title || "").toLowerCase().includes(q));
-
   if (state.filter === "recent") {
     list.sort((a,b) => new Date(b.addedAt || 0) - new Date(a.addedAt || 0));
   } else if (state.filter === "favs") {
@@ -115,8 +120,8 @@ function computeList() {
   }
   return list;
 }
-
 function apply() {
+  setActivePill(state.filter);
   const list = computeList();
   renderFeatured(list);
   renderGrid(list);
@@ -133,33 +138,19 @@ document.addEventListener("click", (e) => {
   }
 });
 
-search.addEventListener("input", (e) => {
-  state.q = e.target.value.trim();
-  apply();
-});
+search.addEventListener("input", (e) => { state.q = e.target.value.trim(); apply(); });
 search.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    state.q = "";
-    search.value = "";
-    state.filter = "all";
-    apply();
-  }
+  if (e.key === "Escape") { state.q = ""; search.value = ""; state.filter = "all"; apply(); }
 });
 
-pills.forEach(b =>
-  b.addEventListener("click", () => {
-    const f = b.dataset.filter;
-    state.filter = f || "all";
-    if (state.filter === "all") {
-      state.q = "";
-      search.value = "";
-    }
-    apply();
-  })
-);
+pills.forEach(b => b.addEventListener("click", () => {
+  const f = b.dataset.filter || "all";
+  state.filter = f;
+  if (f === "all") { state.q = ""; search.value = ""; }
+  apply();
+}));
 
 addBtn.addEventListener("click", () => fileInput.click());
-
 fileInput.addEventListener("change", (e) => {
   const f = e.target.files?.[0];
   if (!f) return;
@@ -171,13 +162,6 @@ fileInput.addEventListener("change", (e) => {
   saveLib(library);
   apply();
   fileInput.value = "";
-});
-
-importDisc?.addEventListener("click", () => {
-  modal.classList.remove("hidden"); modal.classList.add("flex");
-});
-modalClose?.addEventListener("click", () => {
-  modal.classList.add("hidden"); modal.classList.remove("flex");
 });
 
 // init

@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>X-Streamify — Phase 7 Sandbox</title>
+  <title>X-Streamify — Phase 7</title>
   <link href="./tailwind.css" rel="stylesheet" />
 </head>
 <body class="bg-black text-white">
+  <!-- Header -->
   <header class="w-full border-b border-red-500/40 sticky top-0 z-40 bg-black/80 backdrop-blur">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -19,27 +20,54 @@
 
   <!-- Controls -->
   <section class="max-w-7xl mx-auto px-4 py-6">
-    <div class="flex flex-wrap gap-2 items-center">
-      <input id="p7-search" type="text" placeholder="Search your library…"
-             class="flex-1 min-w-[220px] bg-zinc-900/80 border border-zinc-800 rounded-xl px-4 py-2.5 outline-none focus:border-red-500" />
-      <button data-filter="all"    class="p7-pill px-3 py-2 rounded-xl border border-zinc-800 hover:border-red-500 text-sm">All</button>
-      <button data-filter="recent" class="p7-pill px-3 py-2 rounded-xl border border-zinc-800 hover:border-red-500 text-sm">Recently Added</button>
-      <button data-filter="favs"   class="p7-pill px-3 py-2 rounded-xl border border-zinc-800 hover:border-red-500 text-sm">Favorites</button>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="relative flex-1 min-w-[260px]">
+        <input id="p7-search" type="text" placeholder="Search your library…"
+               class="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-4 py-2.5 outline-none focus:border-red-500" />
+        <span id="p7-count" class="absolute right-3 top-2.5 text-xs text-white/50">0</span>
+      </div>
+
+      <button data-filter="all"    id="p7-pill-all"
+              class="p7-pill px-3 py-2 rounded-xl border border-zinc-800 hover:border-red-500 text-sm">All</button>
+      <button data-filter="recent" id="p7-pill-recent"
+              class="p7-pill px-3 py-2 rounded-xl border border-zinc-800 hover:border-red-500 text-sm">Recently Added</button>
+      <button data-filter="favs"   id="p7-pill-favs"
+              class="p7-pill px-3 py-2 rounded-xl border border-zinc-800 hover:border-red-500 text-sm">Favorites</button>
     </div>
   </section>
 
   <!-- Featured -->
   <section class="max-w-7xl mx-auto px-4 py-2">
-    <h2 class="text-xl font-semibold mb-3">Featured</h2>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-xl font-semibold">Featured</h2>
+      <span class="text-xs text-white/50">Auto-picked from library</span>
+    </div>
     <div id="p7-featured" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
   </section>
 
-  <!-- Library -->
+  <!-- My Library -->
   <section class="max-w-7xl mx-auto px-4 py-6">
-    <h2 class="text-xl font-semibold mb-3">My Library (Sandbox)</h2>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-xl font-semibold">My Library (Sandbox)</h2>
+      <div class="flex items-center gap-2">
+        <button id="p7-add-btn" class="rounded-xl px-3 py-1.5 border border-red-500/60 hover:bg-red-600/20 text-sm">Add New Movie</button>
+        <input id="p7-file" type="file" accept="video/*" class="hidden" />
+      </div>
+    </div>
     <div id="p7-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>
     <p id="p7-empty" class="hidden mt-3 text-white/60 text-sm">No results.</p>
   </section>
+
+  <!-- Simple modal placeholder (optional future step) -->
+  <div id="p7-modal" class="fixed inset-0 hidden items-center justify-center bg-black/70">
+    <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 max-w-md w-full mx-4">
+      <div class="text-lg font-semibold mb-2">Import Disc (Sandbox)</div>
+      <p class="text-white/70 text-sm mb-4">Placeholder for disc import. Coming later.</p>
+      <div class="flex justify-end">
+        <button id="p7-modal-close" class="rounded-xl px-3 py-1.5 border border-zinc-800 hover:border-red-500/60 text-sm">Close</button>
+      </div>
+    </div>
+  </div>
 
   <script src="./js/phase7.js" type="module"></script>
 </body>
