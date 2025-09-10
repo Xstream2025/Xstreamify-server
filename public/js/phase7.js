@@ -1,26 +1,19 @@
-// Phase 7 sandbox page — standalone. Reads hearts from xsf_favs_v1.
-// Stores movies in xsf_library_v1 (sample + uploads). Does NOT touch your main page.
-
 const LIB_KEY = "xsf_library_v1";
 const FAVS_KEY = "xsf_favs_v1";
 
 const seed = [
-  { id: "m1", title: "Spirited Away", year: 2001, featured: true,  addedAt: "2025-08-25" },
-  { id: "m2", title: "Interstellar",  year: 2014, featured: true,  addedAt: "2025-09-05" },
-  { id: "m3", title: "The Dark Knight", year: 2008, featured: true, addedAt: "2025-09-01" },
-  { id: "m4", title: "Arrival",       year: 2016, featured: false, addedAt: "2025-09-07" },
-  { id: "m5", title: "Whiplash",      year: 2014, featured: false, addedAt: "2025-08-15" },
-  { id: "m6", title: "Blade Runner 2049", year: 2017, featured: false, addedAt: "2025-09-02" }
+  { id: "m1", title: "Spirited Away",       year: 2001, featured: true,  addedAt: "2025-08-25" },
+  { id: "m2", title: "Interstellar",        year: 2014, featured: true,  addedAt: "2025-09-05" },
+  { id: "m3", title: "The Dark Knight",     year: 2008, featured: true,  addedAt: "2025-09-01" },
+  { id: "m4", title: "Arrival",             year: 2016, featured: false, addedAt: "2025-09-07" },
+  { id: "m5", title: "Whiplash",            year: 2014, featured: false, addedAt: "2025-08-15" },
+  { id: "m6", title: "Blade Runner 2049",   year: 2017, featured: false, addedAt: "2025-09-02" }
 ];
 
-// Load library from localStorage; if missing OR empty, restore seed
 function loadLib() {
   try {
     const raw = localStorage.getItem(LIB_KEY);
-    if (!raw) {
-      localStorage.setItem(LIB_KEY, JSON.stringify(seed));
-      return [...seed];
-    }
+    if (!raw) { localStorage.setItem(LIB_KEY, JSON.stringify(seed)); return [...seed]; }
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) {
       localStorage.setItem(LIB_KEY, JSON.stringify(seed));
@@ -47,20 +40,14 @@ const search      = $("#p7-search");
 const pills       = $$(".p7-pill");
 const fileInput   = $("#p7-file");
 const addBtn      = $("#p7-add-btn");
-const modal       = $("#p7-modal");
-const modalClose  = $("#p7-modal-close");
 
-// --- UI helpers
 function setActivePill(name) {
-  pills.forEach(b => b.classList.remove("ring-1","ring-red-500","border-red-500","bg-red-600/20"));
-  const el = { all: "#p7-pill-all", recent: "#p7-pill-recent", favs: "#p7-pill-favs" }[name] || "#p7-pill-all";
-  const btn = document.querySelector(el);
-  if (btn) btn.classList.add("ring-1","ring-red-500","border-red-500","bg-red-600/20");
+  pills.forEach(b => b.classList.remove("p7-pill-active"));
+  const idMap = { all: "#p7-pill-all", recent: "#p7-pill-recent", favs: "#p7-pill-favs" };
+  const btn = document.querySelector(idMap[name] || idMap.all);
+  if (btn) btn.classList.add("p7-pill-active");
 }
-function updateCount(n) {
-  const c = document.getElementById("p7-count");
-  if (c) c.textContent = String(n);
-}
+function updateCount(n) { const chip = document.getElementById("p7-count-chip"); if (chip) chip.textContent = String(n); }
 
 function poster(letter) {
   return `
@@ -78,9 +65,7 @@ function card(m) {
       <div class="relative">
         ${poster((m.title || "?").charAt(0))}
         <button data-id="${m.id}"
-                class="absolute top-2 right-2 text-xl ${isFav ? "text-red-500" : "text-white/40"} p7-fav">
-          ♥
-        </button>
+                class="absolute top-2 right-2 text-xl ${isFav ? "text-red-500" : "text-white/40"} p7-fav">♥</button>
       </div>
       <div class="p-2 text-sm">
         <div class="font-semibold">${m.title}</div>
@@ -104,13 +89,11 @@ function renderGrid(list) {
   updateCount(list.length);
 }
 
-// ---- State + filter (applies to BOTH Featured and Library)
-let state = { q: "", filter: "all" }; // all|recent|favs
+let state = { q: "", filter: "all" };
 
 function computeList() {
   let list = [...library];
   const q = state.q.toLowerCase();
-
   if (q) list = list.filter(m => (m.title || "").toLowerCase().includes(q));
   if (state.filter === "recent") {
     list.sort((a,b) => new Date(b.addedAt || 0) - new Date(a.addedAt || 0));
@@ -127,7 +110,6 @@ function apply() {
   renderGrid(list);
 }
 
-// ---- Events
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("p7-fav")) {
     const id = e.target.getAttribute("data-id");
@@ -164,6 +146,5 @@ fileInput.addEventListener("change", (e) => {
   fileInput.value = "";
 });
 
-// init
 renderFeatured();
 apply();
