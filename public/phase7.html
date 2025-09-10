@@ -1,117 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
-    <style>
-  /* Shrink the whole UI slightly */
-  html { font-size: 12px !important; } /* try 14px if you want smaller */
-</style>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>X-Streamify — Phase 7</title>
-
-  <link rel="stylesheet" href="build.css" />
-
-  <style>
-    :root { color-scheme: dark; }
-    body{margin:0;background:#000;color:#e5e5e5;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
-
-    /* Pills */
-.pill {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding: 8px 18px;
-  border: 2px solid #ef4444;   /* Tailwind red-600 */
-  border-radius: 9999px;       /* full round pill */
-  color: #fff;
-  background: transparent;
-  font-size: .9rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-.pill--active {
-  background: #ef4444;
-  color: #fff;
-}
-.pill:hover {
-  background: rgba(239,68,68,0.1);
-}
-
-    /* Grid (2→3→4→5 columns) */
-    #grid{display:grid;gap:1.5rem;grid-template-columns:repeat(2,minmax(0,1fr))}
-    @media(min-width:640px){#grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-    @media(min-width:768px){#grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-    @media(min-width:1024px){#grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
-
-    /* Card + poster sizing */
-    .tile-card{position:relative;border-radius:14px;overflow:hidden;background:#0f0f0f;border:1px solid #222;aspect-ratio:2/3}
-    .poster{width:100%;height:100%;object-fit:cover;display:block}
-    .tile-title{margin-top:.5rem;font-size:.9rem;color:#d1d5db}
-
-    /* Heart button (TOP-RIGHT) */
-    .heart-btn{
-      position:absolute;top:.5rem;right:.5rem;left:auto;   /* ← right corner */
-      height:34px;width:34px;border-radius:999px;
-      background:rgba(24,24,24,.75);border:1px solid #333;
-      display:flex;align-items:center;justify-content:center
-    }
-    .heart-icon{width:18px;height:18px;display:block}
-    .heart-icon path{fill:none;stroke:#ffffff;stroke-width:2;transition:fill .15s ease, stroke .15s ease}
-    .heart-btn.is-liked .heart-icon path{fill:#ef4444;stroke:#ef4444}
-
-    /* Header */
-    .header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem}
-    .brand{display:flex;align-items:center;gap:.75rem}
-    .brand-btn{display:inline-flex;align-items:center;justify-content:center;height:36px;width:36px;border-radius:12px;background:#dc2626}
-    .title{font-weight:600;font-size:1.25rem}
-    .section{padding:0 1.5rem}
-    .search{width:min(520px,100%);padding:.75rem 1rem;border-radius:12px;background:#111;border:1px solid #2a2a2a;color:#e5e5e5;outline:none}
-    .search:focus{border-color:#555}
-  </style>
+  <link rel="stylesheet" href="tailwind.css" />
 </head>
-<body>
-
+<body class="bg-black text-white">
   <!-- Header -->
-  <header class="header">
-    <div class="brand">
-  <!-- Phase 6 icon: thicker lines + slight vertical stretch -->
-  <button class="brand-btn" aria-label="home">
-    <svg viewBox="0 0 44 44" width="22" height="22" aria-hidden="true"
-         style="transform: scaleY(1.25); transform-origin: 50% 50%;">
-      <path d="M12 12 L32 32" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <path d="M32 12 L12 32" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-    </svg>
-  </button>
-
-  <h1 class="title">X-Streamify </h1>
-</div>
-  <!-- Title -->
-  
-</div>
-      
-    </div>
-    <button id="add-movie" class="pill" style="border-color:#525252">＋ Add New Movie</button>
+  <header class="flex items-center justify-between px-6 py-4 bg-neutral-900">
+    <div class="text-xl font-extrabold tracking-tight">X-Streamify</div>
+    <nav class="hidden md:flex gap-6 text-sm text-neutral-300">
+      <a href="#" class="hover:text-white">Featured</a>
+      <a href="#" class="hover:text-white">My Library</a>
+      <a href="#" class="hover:text-white">How It Works</a>
+      <a href="#" class="hover:text-white">Your Vault</a>
+    </nav>
+    <button id="add-movie-btn"
+      class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold">
+      + Add New Movie
+    </button>
   </header>
 
-  <!-- Search + Pills -->
-  <section class="section">
-    <div style="display:flex;align-items:center;gap:1rem">
-      <input id="search" class="search" placeholder="Search your library..." />
-    </div>
-    <div style="margin-top:1rem;display:flex;gap:.5rem">
-<button id="filter-all" class="pill pill--active" data-filter="all">All</button>
-<button id="filter-recent" class="pill" data-filter="recent">Recently Added</button>
-<button id="filter-favs" class="pill" data-filter="favs">Favorites</button>
+  <!-- Hero -->
+  <section class="grid md:grid-cols-2 items-center gap-8 px-6 py-10">
+    <div>
+      <h1 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight">
+        Build your personal streaming library.
+      </h1>
 
+      <div class="flex gap-2 mb-5">
+        <input type="text" placeholder="Search..." class="flex-1 px-4 py-2 rounded-lg text-black" />
+        <button class="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700">Search</button>
+      </div>
+
+      <div class="flex gap-3 *:px-4 *:py-2 *:rounded-full">
+        <button class="bg-neutral-800 hover:bg-neutral-700">🎬 Featured</button>
+        <button class="bg-neutral-800 hover:bg-neutral-700">📚 My Library</button>
+        <button class="bg-neutral-800 hover:bg-neutral-700">❓ How It Works</button>
+      </div>
+    </div>
+
+    <!-- Right hero card (kept SMALL and clean) -->
+    <div class="ml-auto rounded-2xl overflow-hidden border border-red-600 shadow-lg max-w-[420px] aspect-[2/3]">
+      <img src="img/placeholder-2x3.png" alt="Hero Poster" class="w-full h-full object-cover" />
     </div>
   </section>
 
   <!-- Featured -->
-  <section class="section" style="margin-top:1.75rem">
-    <h2 style="margin:.25rem 0 1rem 0;color:#9ca3af;font-size:.8rem;letter-spacing:.15em;text-transform:uppercase">Featured</h2>
-    <div id="grid"></div>
+  <section class="px-6 py-8">
+    <h2 class="text-2xl font-extrabold mb-4">Featured</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-neutral-800 rounded-lg p-4 text-center">Feature A</div>
+      <div class="bg-neutral-800 rounded-lg p-4 text-center">Feature B</div>
+      <div class="bg-neutral-800 rounded-lg p-4 text-center">Feature C</div>
+    </div>
   </section>
 
-  <script defer src="/js/phase7.js"></script>
+  <!-- My Library -->
+  <section class="px-6 py-8">
+    <h2 class="text-2xl font-extrabold mb-4">My Library</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-neutral-800 h-40 rounded-lg"></div>
+      <div class="bg-neutral-800 h-40 rounded-lg"></div>
+      <div class="bg-neutral-800 h-40 rounded-lg"></div>
+      <div class="bg-neutral-800 h-40 rounded-lg"></div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="px-6 py-8">
+    <h2 class="text-2xl font-extrabold mb-4">How It Works</h2>
+    <ol class="list-decimal list-inside space-y-2 text-neutral-300">
+      <li>Insert your disc or upload your file.</li>
+      <li>Our system processes and stores your media securely.</li>
+      <li>Stream your movies anytime, anywhere.</li>
+    </ol>
+  </section>
+
+  <!-- Add a New Movie -->
+  <section class="px-6 py-8">
+    <h2 class="text-2xl font-extrabold mb-4">Add a New Movie</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-neutral-800 rounded-lg p-6 text-center hover:bg-neutral-700 cursor-pointer">
+        Import Disc
+      </div>
+      <div class="bg-neutral-800 rounded-lg p-6 text-center hover:bg-neutral-700 cursor-pointer">
+        Upload File
+      </div>
+    </div>
+  </section>
+
+  <!-- Your Vault -->
+  <section class="px-6 py-8">
+    <h2 class="text-2xl font-extrabold mb-4">Your Vault</h2>
+    <div class="flex gap-3 mb-4">
+      <button class="px-4 py-2 bg-red-600 rounded-lg">All</button>
+      <button class="px-4 py-2 bg-neutral-800 rounded-lg">Recently Added</button>
+      <button class="px-4 py-2 bg-neutral-800 rounded-lg">Favorites</button>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-neutral-800 h-40 rounded-lg"></div>
+      <div class="bg-neutral-800 h-40 rounded-lg"></div>
+      <div class="bg-neutral-800 h-40 rounded-lg"></div>
+      <div class="bg-neutral-800 h-40 rounded-lg"></div>
+    </div>
+  </section>
+
+  <!-- Scripts -->
+  <script src="js/phase7.js"></script>
+  <script src="js/phase8-modal.js"></script>
 </body>
 </html>
