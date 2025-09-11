@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>X-Streamify — Phase 9</title>
+  <!-- NOTE: relative paths for GitHub Pages -->
+  <link rel="icon" href="favicon.svg" />
+  <link rel="stylesheet" href="tailwind.css" />
+</head>
+<body class="bg-black text-white min-h-screen">
+  <header class="p-4">
+    <a href="index.html" class="text-rose-500 font-bold text-xl">X-Streamify</a>
+  </header>
+
+  <main class="p-6 max-w-6xl mx-auto">
+    <h1 class="text-3xl font-semibold">Your Vault</h1>
+    <div class="mt-6 flex gap-2">
+      <button data-tab="all" class="tab-btn px-4 py-2 rounded-full ring-1 ring-white/15">All</button>
+      <button data-tab="recent" class="tab-btn px-4 py-2 rounded-full ring-1 ring-white/15">Recently Added</button>
+      <button data-tab="favs" class="tab-btn px-4 py-2 rounded-full ring-1 ring-white/15">Favorites</button>
+    </div>
+    <section id="grid" class="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></section>
+    <div id="empty" class="mt-10 hidden text-white/70">Nothing here yet.</div>
+  </main>
+
+  <script defer src="js/phase9.js"></script>
+</body>
+</html>
