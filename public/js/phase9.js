@@ -1,8 +1,10 @@
 /* public/js/phase9.js
-   Phase 10 — Step 2: Sort control
-   - Sort dropdown (persists): title-az, title-za, recent-desc, fav-first
-   - When "Recently Added" tab is active, sort is forced to recent-desc and the dropdown is disabled
-   - Works with existing search + favorites tab + persisted tab
+   Phase 10 — Step 4: Bulk select + actions (with change-handler fix)
+   - Select mode toggle
+   - Checkboxes on cards when selecting
+   - Bulk Favorite / Unfavorite / Delete bar with live count
+   - Esc exits select mode
+   - Works with tabs + search + sort + edit + favorite + delete
 */
 (() => {
   const MOVIES_KEY = 'xsf_movies_v1';
@@ -13,7 +15,12 @@
   // State
   let currentTab = readTab();
   let searchText = readSearch();
-  let sortKey    = readSort(); // 'title-az' | 'title-za' | 'recent-desc' | 'fav-first'
+  let sortKey    = readSort();
+  let editingId  = null;
+
+  // Bulk-select state (in-memory)
+  let selectMode = false;
+  const selectedIds = new Set();
 
   // ----- utils -----
   const nowTs = () => Date.now();
@@ -50,6 +57,7 @@
   function writeTab(tab) {
     currentTab = tab;
     localStorage.setItem(TAB_KEY, tab);
+    exitSelectMode(); // leave select mode on tab switch to keep things simple
   }
 
   function readSearch() { return (localStorage.getItem(SEARCH_KEY) || '').trim(); }
@@ -123,37 +131,25 @@
 
   function filterByTab(movies) {
     if (currentTab === 'favorites') return movies.filter(m => m.favorite);
-    // 'all' and 'recent' both include all items
-    return movies;
+    return movies; // 'all' and 'recent' include all
   }
 
   function effectiveSortKey() {
-    // When on the "Recently Added" tab, we force 'recent-desc' and disable the dropdown
     return currentTab === 'recent' ? 'recent-desc' : sortKey;
   }
-
   function renderSortUI() {
     const sel = document.getElementById('vaultSort');
     if (!sel) return;
-    const eff = effectiveSortKey();
-    sel.value = eff;
+    sel.value = effectiveSortKey();
     sel.disabled = currentTab === 'recent';
   }
 
   function applySort(list) {
     const s = effectiveSortKey();
-    if (s === 'recent-desc') {
-      return [...list].sort((a,b) => b.addedAt - a.addedAt);
-    }
-    if (s === 'title-za') {
-      return [...list].sort((a,b) => b.title.localeCompare(a.title, undefined, {sensitivity:'base'}));
-    }
-    if (s === 'fav-first') {
-      // Favorites first, then newest first within each group
-      return [...list].sort((a,b) => (b.favorite - a.favorite) || (b.addedAt - a.addedAt));
-    }
-    // 'title-az' default
-    return [...list].sort((a,b) => a.title.localeCompare(b.title, undefined, {sensitivity:'base'}));
+    if (s === 'recent-desc') return [...list].sort((a,b)=>b.addedAt - a.addedAt);
+    if (s === 'title-za')    return [...list].sort((a,b)=>b.title.localeCompare(a.title, undefined, {sensitivity:'base'}));
+    if (s === 'fav-first')   return [...list].sort((a,b)=>(b.favorite - a.favorite) || (b.addedAt - a.addedAt));
+    return [...list].sort((a,b)=>a.title.localeCompare(b.title, undefined, {sensitivity:'base'})); // title-az
   }
 
   function applySearch(list) {
@@ -169,9 +165,19 @@
     if (clear) clear.classList.toggle('hidden', !searchText);
   }
 
+  function updateBulkUI() {
+    const bar = document.getElementById('bulkBar');
+    const cnt = document.getElementById('bulkCount');
+    const toggle = document.getElementById('bulkToggle');
+    if (!bar || !cnt || !toggle) return;
+
+    cnt.textContent = String(selectedIds.size);
+    bar.classList.toggle('hidden', !selectMode);
+    toggle.textContent = selectMode ? 'Selecting…' : 'Select';
+  }
+
   function renderGrid() {
     const grid = document.getElementById('vaultGrid'); if (!grid) return;
-    // 1) filter by tab, 2) apply search, 3) sort per dropdown (or forced if 'recent' tab)
     const base = filterByTab(readMovies());
     const searched = applySearch(base);
     const sorted = applySort(searched);
@@ -185,36 +191,51 @@
       return;
     }
 
-    grid.innerHTML = sorted.map(m => `
-      <div class="group relative rounded-2xl overflow-hidden bg-zinc-900/60 border border-zinc-800 shadow-sm">
-        <!-- ✕ on LEFT -->
-        <button type="button"
-          class="absolute top-2 left-2 z-10 inline-flex items-center justify-center h-9 w-9 rounded-xl bg-black/60 hover:bg-black/80 active:scale-[0.98] transition border border-zinc-700 delete-btn"
-          aria-label="Delete" data-id="${m.id}">
-          <span class="text-zinc-300 group-hover:text-white text-lg leading-none">✕</span>
-        </button>
+    grid.innerHTML = sorted.map(m => {
+      const selected = selectedIds.has(m.id);
+      return `
+        <div class="group relative rounded-2xl overflow-hidden bg-zinc-900/60 border ${selected ? 'ring-2 ring-red-500/60 border-red-700' : 'border-zinc-800'} shadow-sm">
+          <!-- ✕ on LEFT -->
+          <button type="button"
+            class="absolute top-2 left-2 z-10 inline-flex items-center justify-center h-9 w-9 rounded-xl bg-black/60 hover:bg-black/80 active:scale-[0.98] transition border border-zinc-700 delete-btn"
+            aria-label="Delete" data-id="${m.id}">
+            <span class="text-zinc-300 group-hover:text-white text-lg leading-none">✕</span>
+          </button>
 
-        <!-- ❤️ on RIGHT -->
-        <button type="button"
-          class="absolute top-2 right-2 z-10 inline-flex items-center justify-center h-9 w-9 rounded-xl bg-black/60 hover:bg-black/80 active:scale-[0.98] transition border border-zinc-700 fav-btn"
-          aria-label="Toggle favorite" aria-pressed="${m.favorite ? 'true' : 'false'}" data-id="${m.id}">
-          <span class="text-xl leading-none select-none">${m.favorite ? '❤️' : '🤍'}</span>
-        </button>
+          <!-- ❤️ on RIGHT -->
+          <button type="button"
+            class="absolute top-2 right-2 z-10 inline-flex items-center justify-center h-9 w-9 rounded-xl bg-black/60 hover:bg-black/80 active:scale-[0.98] transition border border-zinc-700 fav-btn"
+            aria-label="Toggle favorite" aria-pressed="${m.favorite ? 'true' : 'false'}" data-id="${m.id}">
+            <span class="text-xl leading-none select-none">${m.favorite ? '❤️' : '🤍'}</span>
+          </button>
 
-        <div class="aspect-[2/3] w-full bg-zinc-950">
-          <img
-            src="${posterSrc(m.posterUrl)}"
-            alt="${m.title ? m.title.replace(/"/g,'&quot;') : 'Poster'}"
-            class="h-full w-full object-cover"
-            onerror="this.onerror=null; this.src='${FALLBACK_SVG}';" />
+          <!-- ✎ bottom-right -->
+          <button type="button"
+            class="absolute bottom-2 right-2 z-10 inline-flex items-center justify-center h-9 w-9 rounded-xl bg-black/60 hover:bg-black/80 active:scale-[0.98] transition border border-zinc-700 edit-btn"
+            aria-label="Edit" data-id="${m.id}">
+            <span class="text-lg leading-none text-zinc-300 group-hover:text-white">✎</span>
+          </button>
+
+          <!-- Bulk select checkbox (only visible in select mode) -->
+          ${selectMode ? `
+            <input type="checkbox" class="sel-box h-4 w-4 rounded border-zinc-600 bg-zinc-900" data-id="${m.id}" ${selected ? 'checked' : ''} />
+          ` : ''}
+
+          <div class="aspect-[2/3] w-full bg-zinc-950">
+            <img
+              src="${posterSrc(m.posterUrl)}"
+              alt="${m.title ? m.title.replace(/"/g,'&quot;') : 'Poster'}"
+              class="h-full w-full object-cover"
+              onerror="this.onerror=null; this.src='${FALLBACK_SVG}';" />
+          </div>
+
+          <div class="p-3 border-t border-zinc-800">
+            <div class="text-sm text-zinc-400">Added: ${new Date(m.addedAt).toLocaleDateString()}</div>
+            <div class="mt-1 text-base font-semibold text-zinc-100 truncate" title="${m.title || 'Untitled'}">${m.title || 'Untitled'}</div>
+          </div>
         </div>
-
-        <div class="p-3 border-t border-zinc-800">
-          <div class="text-sm text-zinc-400">Added: ${new Date(m.addedAt).toLocaleDateString()}</div>
-          <div class="mt-1 text-base font-semibold text-zinc-100 truncate" title="${m.title || 'Untitled'}">${m.title || 'Untitled'}</div>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   function renderAll() {
@@ -222,20 +243,78 @@
     renderTabs();
     renderSortUI();
     updateSearchUI();
+    updateBulkUI();
     renderGrid();
   }
 
+  // ----- Edit modal -----
+  function el(id){ return document.getElementById(id); }
+  function openEditModal(movie){
+    editingId = movie.id;
+    el('editTitle').value = movie.title || '';
+    el('editPosterUrl').value = movie.posterUrl || '';
+    el('editFavorite').checked = !!movie.favorite;
+    el('editPosterPreview').src = posterSrc(movie.posterUrl);
+    el('editModal').classList.remove('hidden');
+  }
+  function closeEditModal(){
+    editingId = null;
+    el('editModal').classList.add('hidden');
+  }
+  function onEditSave(){
+    if (!editingId) return closeEditModal();
+    const title = el('editTitle').value.trim();
+    const posterUrl = el('editPosterUrl').value.trim();
+    const favorite = !!el('editFavorite').checked;
+    const movies = readMovies();
+    const idx = movies.findIndex(m => m.id === editingId);
+    if (idx !== -1) {
+      movies[idx] = normalizeMovie({ ...movies[idx], title, posterUrl, favorite });
+      writeMovies(movies);
+    }
+    closeEditModal();
+  }
+  function onEditPosterInput(){
+    const v = el('editPosterUrl').value.trim();
+    el('editPosterPreview').src = posterSrc(v);
+  }
+
+  // ----- Select mode helpers -----
+  function enterSelectMode(){ selectMode = true; updateBulkUI(); renderGrid(); }
+  function exitSelectMode(){ selectMode = false; selectedIds.clear(); updateBulkUI(); renderGrid(); }
+
   // ----- events -----
   function handleTabClick(key){ writeTab(key); renderAll(); }
+
   function onGridClick(e){
     const del = e.target.closest('.delete-btn');
     const fav = e.target.closest('.fav-btn');
+    const edt = e.target.closest('.edit-btn');
+
     if (del){ deleteMovie(del.dataset.id); renderAll(); return; }
     if (fav){
       const id = fav.dataset.id, movies = readMovies(), item = movies.find(m=>m.id===id);
-      if (item){ setFavorite(id, !item.favorite); renderAll(); }
+      if (item){ setFavorite(id, !item.favorite); renderAll(); return; }
+    }
+    if (edt){
+      const id = edt.dataset.id, movies = readMovies(), item = movies.find(m=>m.id===id);
+      if (item){ openEditModal(item); }
+      return;
     }
   }
+
+  // *** NEW: handle checkbox state reliably ***
+  function onGridChange(e){
+    const target = e.target;
+    if (!target || !target.classList || !target.classList.contains('sel-box')) return;
+    const id = target.dataset.id;
+    if (!id) return;
+    if (target.checked) selectedIds.add(id);
+    else selectedIds.delete(id);
+    updateBulkUI();
+    renderGrid(); // reflect ring highlight immediately
+  }
+
   function onTabKeydown(e){
     const order=['tabAll','tabRecent','tabFavs']; const idx=order.indexOf(document.activeElement?.id);
     if (idx===-1) return;
@@ -249,15 +328,38 @@
       e.preventDefault();
     }
   }
-  function onResetDemo(){ localStorage.removeItem(MOVIES_KEY); writeTab('all'); document.dispatchEvent(new CustomEvent('xsf:movies-updated')); }
+  function onResetDemo(){ localStorage.removeItem(MOVIES_KEY); exitSelectMode(); writeTab('all'); document.dispatchEvent(new CustomEvent('xsf:movies-updated')); }
 
   // Search events
   function onSearchInput(e){ writeSearch(e.currentTarget.value || ''); renderGrid(); updateSearchUI(); }
-  function onSearchClear(){ writeSearch(''); renderAll(); document.getElementById('vaultSearch')?.focus(); }
+  function onSearchClear(){ writeSearch(''); renderAll(); el('vaultSearch')?.focus(); }
   function onSearchKeydown(e){ if (e.key === 'Escape'){ onSearchClear(); } }
 
   // Sort events
   function onSortChange(e){ writeSort(e.currentTarget.value); renderGrid(); }
+
+  // Bulk events
+  function onBulkToggle(){ selectMode ? exitSelectMode() : enterSelectMode(); }
+  function onBulkFav(){
+    if (!selectedIds.size) return;
+    const movies = readMovies();
+    movies.forEach(m => { if (selectedIds.has(m.id)) m.favorite = true; });
+    writeMovies(movies);
+  }
+  function onBulkUnfav(){
+    if (!selectedIds.size) return;
+    const movies = readMovies();
+    movies.forEach(m => { if (selectedIds.has(m.id)) m.favorite = false; });
+    writeMovies(movies);
+  }
+  function onBulkDelete(){
+    if (!selectedIds.size) return;
+    if (!confirm(`Delete ${selectedIds.size} selected item(s)?`)) return;
+    const keep = readMovies().filter(m => !selectedIds.has(m.id));
+    writeMovies(keep);
+    exitSelectMode();
+  }
+  function onBulkExit(){ exitSelectMode(); }
 
   // external events
   document.addEventListener('xsf:movie-added', renderAll);
@@ -273,21 +375,39 @@
     document.getElementById('tabRecent')?.addEventListener('keydown', onTabKeydown);
     document.getElementById('tabFavs')?.addEventListener('keydown', onTabKeydown);
 
-    // grid
+    // grid: click + change
     document.getElementById('vaultGrid')?.addEventListener('click', onGridClick);
+    document.getElementById('vaultGrid')?.addEventListener('change', onGridChange);
 
     // reset
     document.getElementById('resetDemo')?.addEventListener('click', onResetDemo);
 
     // search
-    const searchEl = document.getElementById('vaultSearch');
-    const clearBtn = document.getElementById('clearSearch');
-    searchEl?.addEventListener('input', onSearchInput);
-    searchEl?.addEventListener('keydown', onSearchKeydown);
-    clearBtn?.addEventListener('click', onSearchClear);
+    document.getElementById('vaultSearch')?.addEventListener('input', onSearchInput);
+    document.getElementById('vaultSearch')?.addEventListener('keydown', onSearchKeydown);
+    document.getElementById('clearSearch')?.addEventListener('click', onSearchClear);
 
     // sort
     document.getElementById('vaultSort')?.addEventListener('change', onSortChange);
+
+    // bulk
+    document.getElementById('bulkToggle')?.addEventListener('click', onBulkToggle);
+    document.getElementById('bulkFav')?.addEventListener('click', onBulkFav);
+    document.getElementById('bulkUnfav')?.addEventListener('click', onBulkUnfav);
+    document.getElementById('bulkDelete')?.addEventListener('click', onBulkDelete);
+    document.getElementById('bulkExit')?.addEventListener('click', onBulkExit);
+
+    // Esc exits select mode
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && selectMode) exitSelectMode(); });
+
+    // edit modal
+    document.getElementById('editSave')?.addEventListener('click', onEditSave);
+    document.getElementById('editCancel')?.addEventListener('click', closeEditModal);
+    document.getElementById('editClose')?.addEventListener('click', closeEditModal);
+    document.getElementById('editPosterUrl')?.addEventListener('input', onEditPosterInput);
+    document.getElementById('editModal')?.addEventListener('click', (e)=>{
+      if (e.target === e.currentTarget.firstElementChild) closeEditModal(); // backdrop
+    });
 
     renderAll();
   });

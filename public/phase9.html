@@ -3,18 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>X-Streamify – Phase 10 (Step 3)</title>
+  <title>X-Streamify – Phase 10 (Step 4 · bulk fix)</title>
 
   <link href="tailwind.css" rel="stylesheet" />
 
   <!-- Tiny blank favicon to avoid 404 -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>">
 
-  <!-- Ensure heart is right / ✕ is left -->
+  <!-- Pin control buttons exactly -->
   <style>
     .fav-btn   { right:0.5rem !important; left:auto !important; top:0.5rem !important; }
     .delete-btn{ left:0.5rem !important; right:auto !important; top:0.5rem !important; }
     .edit-btn  { right:0.5rem !important; left:auto !important; bottom:0.5rem !important; top:auto !important; }
+    /* Bulk-select checkbox */
+    .sel-box   { position:absolute; left:0.5rem; bottom:0.5rem; z-index:10; transform:scale(1.05); }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100">
@@ -61,8 +63,8 @@
           </div>
         </div>
 
-        <!-- Tabs + Sort row -->
-        <div class="flex items-center justify-between gap-2">
+        <!-- Tabs + Sort + Select row -->
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <!-- Tabs -->
           <div id="vaultTabs" role="tablist" aria-label="Vault filters" class="flex gap-2">
             <button id="tabAll" role="tab" type="button" aria-selected="true"
@@ -82,17 +84,37 @@
             </button>
           </div>
 
-          <!-- Sort -->
+          <!-- Sort + Select -->
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+              <label for="vaultSort" class="text-sm text-zinc-400">Sort</label>
+              <select
+                id="vaultSort"
+                class="rounded-xl border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 focus:border-red-500 disabled:opacity-60">
+                <option value="title-az">Title A–Z</option>
+                <option value="title-za">Title Z–A</option>
+                <option value="recent-desc">Recently Added</option>
+                <option value="fav-first">Favorites First</option>
+              </select>
+            </div>
+
+            <button id="bulkToggle"
+              class="rounded-xl border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white active:scale-[0.98]">
+              Select
+            </button>
+          </div>
+        </div>
+
+        <!-- Bulk action bar (visible only in select mode) -->
+        <div id="bulkBar" class="hidden rounded-xl border border-zinc-800 bg-zinc-900/50 px-3 py-2 flex items-center justify-between">
+          <div class="text-sm text-zinc-300">
+            Selected: <span id="bulkCount" class="font-semibold">0</span>
+          </div>
           <div class="flex items-center gap-2">
-            <label for="vaultSort" class="text-sm text-zinc-400">Sort</label>
-            <select
-              id="vaultSort"
-              class="rounded-xl border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 focus:border-red-500 disabled:opacity-60">
-              <option value="title-az">Title A–Z</option>
-              <option value="title-za">Title Z–A</option>
-              <option value="recent-desc">Recently Added</option>
-              <option value="fav-first">Favorites First</option>
-            </select>
+            <button id="bulkFav" class="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white">Favorite</button>
+            <button id="bulkUnfav" class="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white">Unfavorite</button>
+            <button id="bulkDelete" class="rounded-lg border border-red-600 text-red-200 px-3 py-1.5 text-sm hover:bg-red-600/10">Delete</button>
+            <button id="bulkExit" class="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white">Exit</button>
           </div>
         </div>
       </div>
@@ -102,7 +124,7 @@
     </section>
   </main>
 
-  <!-- Edit Modal -->
+  <!-- Edit Modal (same as Step 3) -->
   <div id="editModal" class="hidden fixed inset-0 z-50">
     <div class="absolute inset-0 bg-black/60"></div>
     <div class="absolute inset-0 flex items-center justify-center p-6">
@@ -111,13 +133,11 @@
           <h3 class="text-lg font-semibold">Edit Movie</h3>
           <button id="editClose" class="rounded-lg px-2 py-1 text-zinc-300 hover:text-white hover:bg-zinc-800">✕</button>
         </div>
-
         <div class="max-h-[65vh] overflow-auto px-5 py-4 space-y-4">
           <div>
             <label for="editTitle" class="block text-sm text-zinc-400">Title</label>
             <input id="editTitle" type="text" class="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 focus:border-red-500" placeholder="Movie title" />
           </div>
-
           <div>
             <label for="editPosterUrl" class="block text-sm text-zinc-400">Poster URL</label>
             <input id="editPosterUrl" type="text" class="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 focus:border-red-500" placeholder="https://…" />
@@ -128,13 +148,11 @@
               </div>
             </div>
           </div>
-
           <label class="inline-flex items-center gap-2 text-sm text-zinc-300">
             <input id="editFavorite" type="checkbox" class="h-4 w-4 rounded border-zinc-600 bg-zinc-900" />
             Mark as favorite
           </label>
         </div>
-
         <div class="sticky bottom-0 bg-zinc-950 rounded-b-2xl px-5 py-4 border-t border-zinc-800 flex items-center justify-end gap-2">
           <button id="editCancel" class="rounded-xl border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white">Cancel</button>
           <button id="editSave" class="rounded-xl border border-red-600 bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500">Save</button>
@@ -143,7 +161,7 @@
     </div>
   </div>
 
-  <!-- Cache-bust so the new JS loads -->
-  <script src="js/phase9.js?v=phase10-step3-edit"></script>
+  <!-- cache-bust to ensure browser loads this version -->
+  <script src="js/phase9.js?v=phase10-step4-bulk-fix2"></script>
 </body>
 </html>
