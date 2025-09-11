@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>X-Streamify</title>
 
-  <!-- Server serves /public at the root -->
   <link href="/tailwind.css" rel="stylesheet" />
   <script defer src="/js/phase7.js"></script>
-  <!-- NOTE: no external vault-anchor.js needed anymore -->
 </head>
 <body class="bg-black text-white font-sans">
   <!-- Header -->
@@ -24,7 +22,7 @@
         <a href="#how" class="hover:text-white">How It Works</a>
         <a href="#vault" class="hover:text-white">Your Vault</a>
       </nav>
-      <button class="hidden md:block bg-red-600 text-white px-4 py-2 rounded-2xl font-medium">
+      <button id="add-movie-btn" class="hidden md:block bg-red-600 text-white px-4 py-2 rounded-2xl font-medium">
         + Add New Movie
       </button>
     </div>
@@ -109,36 +107,59 @@
       </div>
     </div>
 
-    <!-- Anchor + Grid (IDs kept; visuals unchanged) -->
+    <!-- Anchor + Grid -->
     <div id="vault-anchor" class="h-0"></div>
-    <div id="vault-grid" class="mt-4 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
-      <div class="bg-[#232323] h-40 rounded-2xl"></div>
-      <div class="bg-[#232323] h-40 rounded-2xl"></div>
-      <div class="bg-[#232323] h-40 rounded-2xl"></div>
-      <div class="bg-[#232323] h-40 rounded-2xl"></div>
-      <div class="bg-[#232323] h-40 rounded-2xl"></div>
-      <div class="bg-[#232323] h-40 rounded-2xl"></div>
-    </div>
+    <div id="vault-grid" class="mt-4 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
   </section>
 
-  <!-- Inline vault anchoring helper (no external file needed) -->
+  <!-- Add Movie Modal -->
+  <div id="add-movie-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/60" data-close="1"></div>
+    <div class="relative mx-auto mt-24 w-[92%] max-w-lg rounded-2xl bg-[#1a1a1a] p-4 shadow-xl">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xl font-semibold">Add New Movie</h3>
+        <button id="close-add-movie" class="text-white/70 hover:text-white text-2xl leading-none">&times;</button>
+      </div>
+      <p class="text-white/70 mb-4">This is the modal shell. We’ll wire up fields in Phase 9.</p>
+      <div class="flex justify-end gap-2">
+        <button id="cancel-add-movie" class="px-4 py-2 rounded-xl bg-[#2a2a2a]">Cancel</button>
+        <button class="px-4 py-2 rounded-xl bg-red-600">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline helpers: modal + vault anchoring + tabs filtering -->
   <script>
+    // ---- Modal open/close ----
+    (function () {
+      const openBtn = document.getElementById('add-movie-btn');
+      const modal = document.getElementById('add-movie-modal');
+      const closeBtn = document.getElementById('close-add-movie');
+      const cancelBtn = document.getElementById('cancel-add-movie');
+      const backdrop = modal.querySelector('[data-close]');
+      function open() { modal.classList.remove('hidden'); document.body.classList.add('overflow-hidden'); }
+      function close() { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); }
+      if (openBtn) openBtn.addEventListener('click', open);
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      if (cancelBtn) cancelBtn.addEventListener('click', close);
+      if (backdrop) backdrop.addEventListener('click', close);
+      window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+    })();
+
+    // ---- Vault anchoring & renderer ----
     (function () {
       function findVaultGrid() {
         const byId = document.querySelector('#vault-grid');
         if (byId) return byId;
-
         const section = document.querySelector('#vault');
         if (section) {
-          const inSection = section.querySelector('.grid');
-          if (inSection) return inSection;
+          const g = section.querySelector('.grid');
+          if (g) return g;
         }
-
-        const h2 = Array.from(document.querySelectorAll('h2'))
-          .find(h => h.textContent.trim().toLowerCase() === 'your vault');
+        const h2 = Array.from(document.querySelectorAll('h2')).find(h => h.textContent.trim().toLowerCase() === 'your vault');
         if (h2) {
           const root = h2.parentElement;
-          const tryFind = (node) => (node ? node.querySelector('.grid') : null);
+          const tryFind = (n) => (n ? n.querySelector('.grid') : null);
           return tryFind(root) || tryFind(root.nextElementSibling) || tryFind(root.parentElement);
         }
         return document.querySelector('.grid') || document.body;
@@ -147,21 +168,80 @@
       window.renderVaultCards = function(items) {
         const grid = findVaultGrid();
         if (!grid) return;
-
         grid.innerHTML = '';
         items.forEach(item => {
           const card = document.createElement('div');
           card.className = 'xsm-card rounded-2xl overflow-hidden bg-[#121212]';
+          const poster = item.poster ? `<img src="${item.poster}" alt="${item.title}" class="w-full h-full object-cover">` : '';
           card.innerHTML = `
-            <div class="aspect-[2/3] bg-black/40">
-              <img src="${item.poster}" alt="${item.title}" class="w-full h-full object-cover">
-            </div>
+            <div class="aspect-[2/3] bg-black/40">${poster}</div>
             <div class="p-2">
               <p class="text-white text-sm truncate">${item.title}</p>
-            </div>
-          `;
+            </div>`;
           grid.appendChild(card);
         });
+      };
+    })();
+
+    // ---- Tabs filtering ----
+    (function () {
+      const $all = document.getElementById('tab-all');
+      const $recent = document.getElementById('tab-recent');
+      const $favs = document.getElementById('tab-favs');
+
+      // Demo data (you can replace with real data later)
+      const now = Date.now();
+      window.vaultItems = [
+        { id: 1, title: 'Braveheart',   poster: 'https://image.tmdb.org/t/p/w342/or1gBugydmjToAEq7OZY0owwFk.jpg', addedAt: now - 1000*60*60*24*40, favorite: false }, // 40 days ago
+        { id: 2, title: 'The Matrix',   poster: 'https://image.tmdb.org/t/p/w342/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg', addedAt: now - 1000*60*60*24*3,  favorite: true  }, // 3 days ago
+        { id: 3, title: 'Blade Runner', poster: 'https://image.tmdb.org/t/p/w342/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg', addedAt: now - 1000*60*60*24*8,  favorite: false }  // 8 days ago
+      ];
+
+      function setActive(btn) {
+        [$all, $recent, $favs].forEach(b => b.classList.remove('bg-red-600','text-white'));
+        [$all, $recent, $favs].forEach(b => b.classList.add('text-white/70'));
+        btn.classList.remove('text-white/70');
+        btn.classList.add('bg-red-600','text-white');
+      }
+
+      function applyFilter(kind) {
+        const items = window.vaultItems || [];
+        if (kind === 'all') {
+          window.renderVaultCards(items);
+        } else if (kind === 'recent') {
+          const thirtyDays = 1000*60*60*24*30;
+          window.renderVaultCards(items.filter(i => (now - i.addedAt) <= thirtyDays));
+        } else if (kind === 'favs') {
+          window.renderVaultCards(items.filter(i => i.favorite));
+        }
+      }
+
+      // Wire up events
+      if ($all)   $all.addEventListener('click',   () => { setActive($all);   applyFilter('all');   });
+      if ($recent)$recent.addEventListener('click',() => { setActive($recent);applyFilter('recent');});
+      if ($favs)  $favs.addEventListener('click',  () => { setActive($favs);  applyFilter('favs');  });
+
+      // Initial render (All)
+      setActive($all);
+      applyFilter('all');
+
+      // Expose helpers for quick testing in Console
+      window.Vault = {
+        fav: (id, on=true) => {
+          const it = (window.vaultItems||[]).find(i=>i.id===id);
+          if (it) it.favorite = !!on;
+          const active = document.querySelector('#tab-favs.bg-red-600') ? 'favs'
+                        : document.querySelector('#tab-recent.bg-red-600') ? 'recent'
+                        : 'all';
+          applyFilter(active);
+        },
+        addRecentDemo: () => {
+          const id = Math.max(...window.vaultItems.map(i=>i.id))+1;
+          window.vaultItems.unshift({
+            id, title: 'New Movie '+id, poster: '', addedAt: Date.now(), favorite: false
+          });
+          applyFilter('recent'); setActive($recent);
+        }
       };
     })();
   </script>
