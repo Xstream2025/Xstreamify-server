@@ -1,4 +1,4 @@
-/* Phase 8 – Modal + Validation + Create & Render */
+/* Phase 8 – Modal + Validation + Create & Render (robust) */
 
 (() => {
   const qs = (s, r = document) => r.querySelector(s);
@@ -74,7 +74,6 @@
   }
 
   function updateSaveState() {
-    // Using bitwise AND here is fine (true=1/false=0), but make it explicit boolean:
     const ok = Boolean(validateTitle() & validateYear() & validatePoster());
     saveBtn.disabled = !ok;
     return ok;
@@ -99,8 +98,8 @@
 
   function upsertInto(arr, movie) {
     const idx = arr.findIndex(m => m.id === movie.id);
-    if (idx >= 0) arr.splice(idx, 1); // drop duplicate
-    arr.unshift(movie);               // new first
+    if (idx >= 0) arr.splice(idx, 1);
+    arr.unshift(movie);
   }
 
   /* -------- Create & Render -------- */
@@ -122,24 +121,24 @@
       favorite: false
     };
 
-    // 1) Update in-memory list if present
-    if (Array.isArray(window.movies)) {
-      upsertInto(window.movies, movie);
-    }
+    // Ensure global array exists
+    if (!Array.isArray(window.movies)) window.movies = [];
 
-    // 2) Ensure localStorage has the movie (so it survives refresh)
+    // Update in-memory list
+    upsertInto(window.movies, movie);
+
+    // Update localStorage
     const stored = loadStoredMovies();
     upsertInto(stored, movie);
     saveStoredMovies(stored);
 
-    // 3) Try to refresh the UI immediately
+    // Force immediate UI refresh (whichever exists)
     if (typeof window.applyFilters === 'function') {
       try { window.applyFilters(); } catch {}
     } else if (typeof window.renderMovies === 'function') {
       try { window.renderMovies(); } catch {}
     }
 
-    // 4) Close the modal
     closeModal();
   }
 
@@ -147,7 +146,6 @@
   openBtn?.addEventListener('click', openModal);
   closeBtn?.addEventListener('click', closeModal);
   cancelBtn?.addEventListener('click', (e) => { e.preventDefault(); closeModal(); });
-
   backdrop?.addEventListener('click', closeModal);
 
   [inputTitle, inputYear, inputPoster].forEach(inp => {
