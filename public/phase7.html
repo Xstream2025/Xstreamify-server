@@ -7,6 +7,7 @@
 
   <link href="/tailwind.css" rel="stylesheet" />
   <script defer src="/js/phase7.js"></script>
+  <script defer src="/js/profiles.js"></script>
 </head>
 <body class="bg-black text-white font-sans">
   <!-- Header -->
@@ -34,19 +35,16 @@
       <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
         Build your personal streaming library.
       </h1>
-
       <div class="flex items-stretch gap-3 max-w-2xl">
         <input type="text" placeholder="Search..." class="flex-1 rounded-xl px-4 py-3 text-black focus:outline-none" />
         <button class="bg-red-600 rounded-xl px-4 py-3 font-medium">Search</button>
       </div>
-
       <div class="flex items-center gap-3 mt-5 text-sm">
         <span class="inline-flex items-center gap-2 bg-[#1e1e1e] px-3 py-1.5 rounded-2xl">🎬 Featured</span>
         <span class="inline-flex items-center gap-2 bg-[#1e1e1e] px-3 py-1.5 rounded-2xl">📚 My Library</span>
         <span class="inline-flex items-center gap-2 bg-[#1e1e1e] px-3 py-1.5 rounded-2xl">❓ How It Works</span>
       </div>
     </div>
-
     <aside class="hidden md:block">
       <div class="h-[420px] rounded-3xl border-2 border-red-600/70 p-4">
         <div class="w-full h-full rounded-2xl border border-red-600/60 grid place-items-center text-red-400">
@@ -106,8 +104,6 @@
         <button id="tab-favs" class="px-3 py-1 rounded-full text-sm font-medium text-white/70 hover:text-white">Favorites</button>
       </div>
     </div>
-
-    <!-- Anchor + Grid -->
     <div id="vault-anchor" class="h-0"></div>
     <div id="vault-grid" class="mt-4 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
   </section>
@@ -128,7 +124,28 @@
     </div>
   </div>
 
-  <!-- Inline helpers: modal + vault anchoring + tabs filtering -->
+  <!-- Profiles Picker Overlay (absolute center) -->
+  <div id="profiles-overlay" class="fixed inset-0 z-[70] hidden">
+    <!-- dim background -->
+    <div class="absolute inset-0 bg-black/80"></div>
+
+    <!-- absolute center container -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,56rem)] px-6">
+      <h1 class="text-5xl font-extrabold text-center mb-6">Who's watching?</h1>
+
+      <div class="rounded-2xl bg-white/5 backdrop-blur-sm p-6">
+        <div id="profiles-grid"
+             class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-6 justify-items-center">
+        </div>
+      </div>
+
+      <div class="flex justify-center mt-6">
+        <button id="manage-profiles" class="px-4 py-2 rounded-xl bg-[#2a2a2a]">Manage Profiles</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline helpers: modal + vault anchoring + tabs filtering + profiles overlay -->
   <script>
     // ---- Modal open/close ----
     (function () {
@@ -152,10 +169,7 @@
         const byId = document.querySelector('#vault-grid');
         if (byId) return byId;
         const section = document.querySelector('#vault');
-        if (section) {
-          const g = section.querySelector('.grid');
-          if (g) return g;
-        }
+        if (section) { const g = section.querySelector('.grid'); if (g) return g; }
         const h2 = Array.from(document.querySelectorAll('h2')).find(h => h.textContent.trim().toLowerCase() === 'your vault');
         if (h2) {
           const root = h2.parentElement;
@@ -164,7 +178,6 @@
         }
         return document.querySelector('.grid') || document.body;
       }
-
       window.renderVaultCards = function(items) {
         const grid = findVaultGrid();
         if (!grid) return;
@@ -175,74 +188,90 @@
           const poster = item.poster ? `<img src="${item.poster}" alt="${item.title}" class="w-full h-full object-cover">` : '';
           card.innerHTML = `
             <div class="aspect-[2/3] bg-black/40">${poster}</div>
-            <div class="p-2">
-              <p class="text-white text-sm truncate">${item.title}</p>
-            </div>`;
+            <div class="p-2"><p class="text-white text-sm truncate">${item.title}</p></div>`;
           grid.appendChild(card);
         });
       };
     })();
 
-    // ---- Tabs filtering ----
+    // ---- Tabs filtering (demo data) ----
     (function () {
       const $all = document.getElementById('tab-all');
       const $recent = document.getElementById('tab-recent');
       const $favs = document.getElementById('tab-favs');
-
-      // Demo data (you can replace with real data later)
       const now = Date.now();
       window.vaultItems = [
-        { id: 1, title: 'Braveheart',   poster: 'https://image.tmdb.org/t/p/w342/or1gBugydmjToAEq7OZY0owwFk.jpg', addedAt: now - 1000*60*60*24*40, favorite: false }, // 40 days ago
-        { id: 2, title: 'The Matrix',   poster: 'https://image.tmdb.org/t/p/w342/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg', addedAt: now - 1000*60*60*24*3,  favorite: true  }, // 3 days ago
-        { id: 3, title: 'Blade Runner', poster: 'https://image.tmdb.org/t/p/w342/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg', addedAt: now - 1000*60*60*24*8,  favorite: false }  // 8 days ago
+        { id: 1, title: 'Braveheart',   poster: 'https://image.tmdb.org/t/p/w342/or1gBugydmjToAEq7OZY0owwFk.jpg', addedAt: now - 1000*60*60*24*40, favorite: false },
+        { id: 2, title: 'The Matrix',   poster: 'https://image.tmdb.org/t/p/w342/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg', addedAt: now - 1000*60*60*24*3,  favorite: true  },
+        { id: 3, title: 'Blade Runner', poster: 'https://image.tmdb.org/t/p/w342/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg', addedAt: now - 1000*60*60*24*8,  favorite: false }
       ];
-
       function setActive(btn) {
-        [$all, $recent, $favs].forEach(b => b.classList.remove('bg-red-600','text-white'));
-        [$all, $recent, $favs].forEach(b => b.classList.add('text-white/70'));
-        btn.classList.remove('text-white/70');
-        btn.classList.add('bg-red-600','text-white');
+        [$all,$recent,$favs].forEach(b=>b.classList.remove('bg-red-600','text-white'));
+        [$all,$recent,$favs].forEach(b=>b.classList.add('text-white/70'));
+        btn.classList.remove('text-white/70'); btn.classList.add('bg-red-600','text-white');
       }
-
       function applyFilter(kind) {
         const items = window.vaultItems || [];
-        if (kind === 'all') {
-          window.renderVaultCards(items);
-        } else if (kind === 'recent') {
+        if (kind === 'recent') {
           const thirtyDays = 1000*60*60*24*30;
-          window.renderVaultCards(items.filter(i => (now - i.addedAt) <= thirtyDays));
-        } else if (kind === 'favs') {
-          window.renderVaultCards(items.filter(i => i.favorite));
+          return window.renderVaultCards(items.filter(i => (now - i.addedAt) <= thirtyDays));
         }
+        if (kind === 'favs') return window.renderVaultCards(items.filter(i => i.favorite));
+        window.renderVaultCards(items);
       }
-
-      // Wire up events
       if ($all)   $all.addEventListener('click',   () => { setActive($all);   applyFilter('all');   });
       if ($recent)$recent.addEventListener('click',() => { setActive($recent);applyFilter('recent');});
       if ($favs)  $favs.addEventListener('click',  () => { setActive($favs);  applyFilter('favs');  });
+      setActive($all); applyFilter('all');
 
-      // Initial render (All)
-      setActive($all);
-      applyFilter('all');
-
-      // Expose helpers for quick testing in Console
       window.Vault = {
-        fav: (id, on=true) => {
-          const it = (window.vaultItems||[]).find(i=>i.id===id);
-          if (it) it.favorite = !!on;
-          const active = document.querySelector('#tab-favs.bg-red-600') ? 'favs'
-                        : document.querySelector('#tab-recent.bg-red-600') ? 'recent'
-                        : 'all';
-          applyFilter(active);
-        },
-        addRecentDemo: () => {
-          const id = Math.max(...window.vaultItems.map(i=>i.id))+1;
-          window.vaultItems.unshift({
-            id, title: 'New Movie '+id, poster: '', addedAt: Date.now(), favorite: false
-          });
-          applyFilter('recent'); setActive($recent);
-        }
+        fav:(id,on=true)=>{const it=(window.vaultItems||[]).find(i=>i.id===id); if(it) it.favorite=!!on; const a=document.querySelector('#tab-favs.bg-red-600')?'favs':document.querySelector('#tab-recent.bg-red-600')?'recent':'all'; applyFilter(a);}
       };
+    })();
+
+    // ---- Profiles overlay (Who’s watching?) — waits for Profiles; uses safe avatar fallback ----
+    (function initProfilesOverlay() {
+      if (!window.Profiles) return setTimeout(initProfilesOverlay, 25);
+
+      const overlay = document.getElementById('profiles-overlay');
+      const grid = document.getElementById('profiles-grid');
+
+      // Inline SVG fallback (no external requests)
+      const AVATAR_FALLBACK = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+           <rect width="160" height="160" rx="24" fill="#2a2a2a"/>
+           <circle cx="80" cy="64" r="32" fill="#a3a3a3"/>
+           <rect x="32" y="104" width="96" height="40" rx="20" fill="#a3a3a3"/>
+         </svg>`
+      );
+
+      function hide(){ overlay.classList.add('hidden'); }
+      function show(){ overlay.classList.remove('hidden'); }
+
+      function card(p){
+        const src = p.avatar && p.avatar.trim() ? p.avatar : AVATAR_FALLBACK;
+        return `
+          <button data-id="${p.id}" class="group">
+            <div class="w-36 h-36 md:w-40 md:h-40 rounded-xl overflow-hidden ring-2 ring-transparent group-hover:ring-white/60 transition">
+              <img src="${src}" onerror="this.onerror=null;this.src='${AVATAR_FALLBACK}'" class="w-full h-full object-cover" alt="${p.name}">
+            </div>
+            <div class="text-center mt-2 text-white/90">${p.name}</div>
+          </button>`;
+      }
+
+      function render(){
+        const list = Profiles.list();
+        grid.innerHTML = list.map(card).join('');
+        grid.querySelectorAll('[data-id]').forEach(btn=>{
+          btn.addEventListener('click', ()=>{
+            Profiles.setActive(btn.getAttribute('data-id'));
+            hide();
+          });
+        });
+      }
+
+      if (!Profiles.activeId()) { render(); show(); }
+      window.ProfilesUI = { open: () => { render(); show(); } };
     })();
   </script>
 </body>
