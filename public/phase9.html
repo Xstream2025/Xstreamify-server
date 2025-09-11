@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>X-Streamify – Phase 9</title>
+  <link href="tailwind.css" rel="stylesheet" />
+</head>
+<body class="bg-zinc-950 text-zinc-100">
+  <header class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+    <h1 class="text-xl font-bold">X-Streamify</h1>
+    <nav class="space-x-4">
+      <a href="#featured" class="hover:text-red-500">Featured</a>
+      <a href="#library" class="hover:text-red-500">My Library</a>
+      <a href="#vault" class="hover:text-red-500">Your Vault</a>
+    </nav>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-6">
+    <!-- Other sections… -->
+
+    <!-- Your Vault -->
+    <section id="vault" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl sm:text-3xl font-bold text-zinc-100">Your Vault</h2>
+        <button
+          id="resetDemo"
+          class="rounded-xl border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-red-500 hover:text-red-500 active:scale-[0.98] transition">
+          Reset Demo
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div id="vaultTabs" role="tablist" aria-label="Vault filters" class="mt-4 flex gap-2">
+        <button
+          id="tabAll"
+          role="tab"
+          type="button"
+          aria-selected="true"
+          class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
+          <span>All</span>
+          <span id="countAll" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
+        </button>
+
+        <button
+          id="tabRecent"
+          role="tab"
+          type="button"
+          aria-selected="false"
+          class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
+          <span>Recently Added</span>
+          <span id="countRecent" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
+        </button>
+
+        <button
+          id="tabFavs"
+          role="tab"
+          type="button"
+          aria-selected="false"
+          class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
+          <span>Favorites</span>
+          <span id="countFavs" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
+        </button>
+      </div>
+
+      <!-- Grid -->
+      <div id="vaultGrid" class="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4"></div>
+    </section>
+  </main>
+
+  <script src="js/phase9.js"></script>
+</body>
+</html>
