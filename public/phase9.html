@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>X-Streamify – Phase 10 (Step 2)</title>
+  <title>X-Streamify – Phase 10 (Step 3)</title>
 
   <link href="tailwind.css" rel="stylesheet" />
 
-  <!-- Tiny blank favicon to kill 404s -->
+  <!-- Tiny blank favicon to avoid 404 -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>">
 
-  <!-- Force heart-right / ✕-left regardless of cache -->
+  <!-- Ensure heart is right / ✕ is left -->
   <style>
-    .fav-btn   { right:0.5rem !important; left:auto !important; }
-    .delete-btn{ left:0.5rem !important; right:auto !important; }
+    .fav-btn   { right:0.5rem !important; left:auto !important; top:0.5rem !important; }
+    .delete-btn{ left:0.5rem !important; right:auto !important; top:0.5rem !important; }
+    .edit-btn  { right:0.5rem !important; left:auto !important; bottom:0.5rem !important; top:auto !important; }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100">
@@ -101,7 +102,48 @@
     </section>
   </main>
 
-  <!-- Cache-bust so this JS definitely reloads -->
-  <script src="js/phase9.js?v=phase10-step2-sort"></script>
+  <!-- Edit Modal -->
+  <div id="editModal" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/60"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-6">
+      <div class="w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-950 shadow-xl">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+          <h3 class="text-lg font-semibold">Edit Movie</h3>
+          <button id="editClose" class="rounded-lg px-2 py-1 text-zinc-300 hover:text-white hover:bg-zinc-800">✕</button>
+        </div>
+
+        <div class="max-h-[65vh] overflow-auto px-5 py-4 space-y-4">
+          <div>
+            <label for="editTitle" class="block text-sm text-zinc-400">Title</label>
+            <input id="editTitle" type="text" class="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 focus:border-red-500" placeholder="Movie title" />
+          </div>
+
+          <div>
+            <label for="editPosterUrl" class="block text-sm text-zinc-400">Poster URL</label>
+            <input id="editPosterUrl" type="text" class="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 focus:border-red-500" placeholder="https://…" />
+            <div class="mt-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-3">
+              <div class="text-xs text-zinc-400 mb-2">Preview</div>
+              <div class="aspect-[2/3] w-40 bg-zinc-900 rounded-lg overflow-hidden">
+                <img id="editPosterPreview" src="" alt="Poster preview" class="h-full w-full object-cover" />
+              </div>
+            </div>
+          </div>
+
+          <label class="inline-flex items-center gap-2 text-sm text-zinc-300">
+            <input id="editFavorite" type="checkbox" class="h-4 w-4 rounded border-zinc-600 bg-zinc-900" />
+            Mark as favorite
+          </label>
+        </div>
+
+        <div class="sticky bottom-0 bg-zinc-950 rounded-b-2xl px-5 py-4 border-t border-zinc-800 flex items-center justify-end gap-2">
+          <button id="editCancel" class="rounded-xl border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white">Cancel</button>
+          <button id="editSave" class="rounded-xl border border-red-600 bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cache-bust so the new JS loads -->
+  <script src="js/phase9.js?v=phase10-step3-edit"></script>
 </body>
 </html>
