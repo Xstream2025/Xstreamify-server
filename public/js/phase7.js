@@ -1,99 +1,65 @@
-/* Phase 7 — merged with Phase 6 behaviors (favorites + filters + search) */
+/* Phase 7 JS — keeps your visuals and adds a robust Vault renderer
+   that pins cards directly under the "Your Vault" heading without
+   changing your HTML/CSS structure.  */
 
-/* ----- Data ----- */
-const movies = [
-  { title: "Spirited Away", year: 2001, poster: "https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg" },
-  { title: "Interstellar", year: 2014, poster: "https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg" },
-  { title: "The Dark Knight", year: 2008, poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
-  { title: "Arrival", year: 2016, poster: "https://image.tmdb.org/t/p/w500/x2FJsf1ElAgr63Y3PNPtJrcmpoe.jpg" },
-  { title: "Whiplash", year: 2014, poster: "" },
-  { title: "Blade Runner 2049", year: 2017, poster: "" }
-];
+// -------- Vault helpers --------
 
-const PLACEHOLDER = "/img/placeholder-2x3.png";
+// Locate the vault grid that sits under the “Your Vault” area.
+function findVaultGrid() {
+  // 1) If you already have an explicit id
+  const byId = document.querySelector('#vault-grid');
+  if (byId) return byId;
 
-/* ----- DOM ----- */
-const grid = document.getElementById("grid");
-const btnAll = document.getElementById("filter-all");
-const btnRecent = document.getElementById("filter-recent");
-const btnFavs = document.getElementById("filter-favs");
-const searchInput = document.getElementById("search");
+  // 2) If there is a section#vault, use its first grid
+  const vaultSection = document.querySelector('#vault');
+  if (vaultSection) {
+    const gridInSection = vaultSection.querySelector('.grid');
+    if (gridInSection) return gridInSection;
+  }
 
-/* ----- Storage helpers (Phase 6 style) ----- */
-const FAV_KEY = "xstreamify:favs";
-const favSet = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]"));
-function saveFavs() { localStorage.setItem(FAV_KEY, JSON.stringify([...favSet])); }
+  // 3) Find the H2 that says "Your Vault", then the next .grid following it
+  const h2s = Array.from(document.querySelectorAll('h2'));
+  const vaultH2 = h2s.find(h => h.textContent.trim().toLowerCase() === 'your vault');
+  if (vaultH2) {
+    // Try siblings under the same section/container
+    let container = vaultH2.parentElement;
+    // search in the parent block and its next sibling if needed
+    const tryFind = (root) => root ? root.querySelector('.grid') : null;
+    let grid = tryFind(container.parentElement) || tryFind(container.nextElementSibling) || tryFind(container);
+    if (grid) return grid;
+  }
 
-/* ----- Render ----- */
-function render(list) {
-  grid.innerHTML = "";
-  list.forEach(movie => {
-    const id = `${movie.title}-${movie.year}`;
+  // 4) Absolute fallback so we never append to the document end
+  return document.querySelector('.grid') || document.body;
+}
 
-    const tile = document.createElement("article");
-    tile.className = "tile-card";
-    tile.dataset.year = movie.year;
-    tile.dataset.id = id;
+// Render cards into the detected grid
+function renderVaultCards(items) {
+  const grid = findVaultGrid();
+  if (!grid) return;
 
-    const poster = (movie.poster && movie.poster.trim() ? movie.poster : PLACEHOLDER);
-
-    const heartBtn = document.createElement("button");
-    heartBtn.className = "heart-btn" + (favSet.has(id) ? " is-liked" : "");
-    heartBtn.innerHTML = `
-      <svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5
-          2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09
-          C13.09 3.81 14.76 3 16.5 3
-          19.58 3 22 5.42 22 8.5
-          c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-      </svg>
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'xsm-card rounded-2xl overflow-hidden bg-[#121212]';
+    card.innerHTML = `
+      <div class="aspect-[2/3] bg-black/40">
+        <img src="${item.poster}" alt="${item.title}" class="w-full h-full object-cover">
+      </div>
+      <div class="p-2">
+        <p class="text-white text-sm truncate">${item.title}</p>
+      </div>
     `;
-
-    heartBtn.addEventListener("click", () => {
-      if (favSet.has(id)) { favSet.delete(id); heartBtn.classList.remove("is-liked"); }
-      else { favSet.add(id); heartBtn.classList.add("is-liked"); }
-      saveFavs();
-    });
-
-    tile.innerHTML = `
-      <img class="poster"
-           src="${poster}"
-           alt="${movie.title}"
-           onerror="this.onerror=null;this.src='${PLACEHOLDER}'" />
-      <div class="tile-title">${movie.title} <span>${movie.year}</span></div>
-    `;
-
-    tile.appendChild(heartBtn);
-    grid.appendChild(tile);
+    grid.appendChild(card);
   });
 }
 
-/* ----- Filters (Phase 6 behaviors) ----- */
-function setActive(btn) {
-  [btnAll, btnRecent, btnFavs].forEach(b => b.classList.remove("pill--active"));
-  btn.classList.add("pill--active");
-}
-
-function applyFilters() {
-  const q = (searchInput?.value || "").trim().toLowerCase();
-  let list = movies.filter(m => m.title.toLowerCase().includes(q));
-
-  if (btnRecent.classList.contains("pill--active")) {
-    // "Recently Added" = newest first (last 3 by year)
-    list = [...list].sort((a,b) => b.year - a.year).slice(0, 3);
-  }
-  if (btnFavs.classList.contains("pill--active")) {
-    list = list.filter(m => favSet.has(`${m.title}-${m.year}`));
-  }
-  render(list);
-}
-
-/* Events */
-btnAll?.addEventListener("click", () => { setActive(btnAll); applyFilters(); });
-btnRecent?.addEventListener("click", () => { setActive(btnRecent); applyFilters(); });
-btnFavs?.addEventListener("click", () => { setActive(btnFavs); applyFilters(); });
-searchInput?.addEventListener("input", () => applyFilters());
-
-/* Initial load */
-setActive(btnAll);
-applyFilters();
+// -------- App boot (leave existing app code below this) --------
+document.addEventListener('DOMContentLoaded', () => {
+  // (Optional) quick smoke test — comment this out if you don’t want sample tiles
+  // renderVaultCards([
+  //   { title: 'Braveheart',   poster: 'https://image.tmdb.org/t/p/w342/hs7htLqV9FJZQhY2vWcF4sJ5v7K.jpg' },
+  //   { title: 'The Matrix',   poster: 'https://image.tmdb.org/t/p/w342/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg' },
+  //   { title: 'Blade Runner', poster: 'https://image.tmdb.org/t/p/w342/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg' }
+  // ]);
+});
