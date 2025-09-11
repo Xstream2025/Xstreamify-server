@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>X-Streamify – Phase 9</title>
+  <title>X-Streamify – Phase 10 (Step 2)</title>
 
-  <!-- Tailwind -->
   <link href="tailwind.css" rel="stylesheet" />
-<style>
-  .fav-btn   { right:0.5rem !important; left:auto !important; }
-  .delete-btn{ left:0.5rem !important; right:auto !important; }
-</style>
+
   <!-- Tiny blank favicon to kill 404s -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>">
+
+  <!-- Force heart-right / ✕-left regardless of cache -->
+  <style>
+    .fav-btn   { right:0.5rem !important; left:auto !important; }
+    .delete-btn{ left:0.5rem !important; right:auto !important; }
+  </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100">
   <header class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
@@ -36,23 +38,62 @@
         </button>
       </div>
 
-      <!-- Tabs -->
-      <div id="vaultTabs" role="tablist" aria-label="Vault filters" class="mt-4 flex gap-2">
-        <button id="tabAll" role="tab" type="button" aria-selected="true"
-          class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
-          <span>All</span>
-          <span id="countAll" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
-        </button>
-        <button id="tabRecent" role="tab" type="button" aria-selected="false"
-          class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
-          <span>Recently Added</span>
-          <span id="countRecent" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
-        </button>
-        <button id="tabFavs" role="tab" type="button" aria-selected="false"
-          class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
-          <span>Favorites</span>
-          <span id="countFavs" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
-        </button>
+      <!-- Controls -->
+      <div class="mt-4 flex flex-col gap-3">
+        <!-- Search -->
+        <div class="w-full sm:max-w-md">
+          <label for="vaultSearch" class="sr-only">Search your vault</label>
+          <div class="relative">
+            <input
+              id="vaultSearch"
+              type="text"
+              placeholder="Search titles…"
+              class="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-10 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 outline-none focus:border-red-500"
+              autocomplete="off" />
+            <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">🔎</span>
+            <button
+              id="clearSearch"
+              type="button"
+              class="hidden absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800">
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabs + Sort row -->
+        <div class="flex items-center justify-between gap-2">
+          <!-- Tabs -->
+          <div id="vaultTabs" role="tablist" aria-label="Vault filters" class="flex gap-2">
+            <button id="tabAll" role="tab" type="button" aria-selected="true"
+              class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
+              <span>All</span>
+              <span id="countAll" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
+            </button>
+            <button id="tabRecent" role="tab" type="button" aria-selected="false"
+              class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
+              <span>Recently Added</span>
+              <span id="countRecent" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
+            </button>
+            <button id="tabFavs" role="tab" type="button" aria-selected="false"
+              class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
+              <span>Favorites</span>
+              <span id="countFavs" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
+            </button>
+          </div>
+
+          <!-- Sort -->
+          <div class="flex items-center gap-2">
+            <label for="vaultSort" class="text-sm text-zinc-400">Sort</label>
+            <select
+              id="vaultSort"
+              class="rounded-xl border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 focus:border-red-500 disabled:opacity-60">
+              <option value="title-az">Title A–Z</option>
+              <option value="title-za">Title Z–A</option>
+              <option value="recent-desc">Recently Added</option>
+              <option value="fav-first">Favorites First</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- Grid -->
@@ -60,7 +101,7 @@
     </section>
   </main>
 
-  <!-- Cache-bust query to force the newest JS to load -->
-  <script src="js/phase9.js?v=heart-right-fix"></script>
+  <!-- Cache-bust so this JS definitely reloads -->
+  <script src="js/phase9.js?v=phase10-step2-sort"></script>
 </body>
 </html>
