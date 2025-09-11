@@ -1,42 +1,56 @@
 /* public/js/phase9.js
-   Phase 9 — Step 7: Polish
-   - Active tab highlight + ring
-   - Hover/pressed states (via Tailwind classes already in HTML)
-   - Live counters on tabs (All / Recently Added / Favorites)
-   - Keyboard nav for tabs (←/→, Enter/Space)
-   - Reset Demo button (clears demo data)
+   Phase 9 — Step 8: Final review/cleanup
+   - Persist current tab (survives refresh)
+   - Safe storage normalization
+   - Unified re-render on any change
+   - Keyboard nav kept from Step 7
+   - Reset Demo returns to "All" and updates counts
+   - Tiny test API on window.xsf for quick QA
 */
-
 (() => {
   const MOVIES_KEY = 'xsf_movies_v1';
-  let currentTab = 'all'; // 'all' | 'recent' | 'favorites'
+  const TAB_KEY = 'xsf_tab_v1';
+  let currentTab = readTab();
 
-  // ----------
-  // Utilities
-  // ----------
+  // ---- Utilities ----
   const nowTs = () => Date.now();
+  const uid = () =>
+    (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : 'id_' + Math.random().toString(36).slice(2);
+
+  function normalizeMovie(m) {
+    return {
+      id: m.id ?? uid(),
+      title: (m.title ?? '').trim(),
+      posterUrl: (m.posterUrl ?? '').trim(),
+      favorite: !!m.favorite,
+      addedAt: typeof m.addedAt === 'number' ? m.addedAt : nowTs(),
+    };
+  }
 
   function readMovies() {
     try {
       const raw = localStorage.getItem(MOVIES_KEY);
       const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr)
-        ? arr.map(m => ({
-            id: m.id ?? (crypto?.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)),
-            title: (m.title ?? '').trim(),
-            posterUrl: (m.posterUrl ?? '').trim(),
-            favorite: !!m.favorite,
-            addedAt: typeof m.addedAt === 'number' ? m.addedAt : nowTs(),
-          }))
-        : [];
+      return Array.isArray(arr) ? arr.map(normalizeMovie) : [];
     } catch {
       return [];
     }
   }
 
   function writeMovies(movies) {
-    localStorage.setItem(MOVIES_KEY, JSON.stringify(movies));
+    localStorage.setItem(MOVIES_KEY, JSON.stringify(movies.map(normalizeMovie)));
     document.dispatchEvent(new CustomEvent('xsf:movies-updated'));
+  }
+
+  function readTab() {
+    const t = localStorage.getItem(TAB_KEY);
+    return t === 'recent' || t === 'favorites' ? t : 'all';
+  }
+  function writeTab(tab) {
+    currentTab = tab;
+    localStorage.setItem(TAB_KEY, tab);
   }
 
   function setFavorite(id, value) {
@@ -49,10 +63,10 @@
   }
 
   function deleteMovie(id) {
-    writeMovies(readMovies().filter(m => m.id === id ? false : true));
+    writeMovies(readMovies().filter(m => m.id !== id));
   }
 
-  // Poster fallback (inline SVG, no external asset)
+  // Poster fallback (inline SVG)
   const FALLBACK_SVG =
     'data:image/svg+xml;utf8,' +
     encodeURIComponent(
@@ -64,15 +78,11 @@
     );
   const posterSrc = (url) => (url && url.trim()) ? url.trim() : FALLBACK_SVG;
 
-  // ----------
-  // Rendering
-  // ----------
+  // ---- Rendering ----
   function updateTabCounts() {
     const movies = readMovies();
     const allCount = movies.length;
     const favCount = movies.filter(m => m.favorite).length;
-
-    // "Recently Added" is the same total, but we display sorted by addedAt
     const recentCount = allCount;
 
     const elAll = document.getElementById('countAll');
@@ -85,17 +95,14 @@
   }
 
   function renderTabs() {
-    const tabAll = document.getElementById('tabAll');
-    const tabRecent = document.getElementById('tabRecent');
-    const tabFavs = document.getElementById('tabFavs');
-
-    const tabs = [
-      { el: tabAll, key: 'all' },
-      { el: tabRecent, key: 'recent' },
-      { el: tabFavs, key: 'favorites' },
+    const map = [
+      { id: 'tabAll', key: 'all' },
+      { id: 'tabRecent', key: 'recent' },
+      { id: 'tabFavs', key: 'favorites' },
     ];
 
-    tabs.forEach(({ el, key }) => {
+    map.forEach(({ id, key }) => {
+      const el = document.getElementById(id);
       if (!el) return;
       const active = currentTab === key;
       el.setAttribute('aria-selected', String(active));
@@ -105,7 +112,6 @@
       el.classList.toggle('ring-2', active);
       el.classList.toggle('ring-red-600/60', active);
 
-      // Badge style: brighten when active
       const badge = el.querySelector('.tab-badge');
       if (badge) {
         badge.classList.toggle('border-zinc-700', !active);
@@ -186,11 +192,9 @@
     renderGrid();
   }
 
-  // ----------
-  // Events
-  // ----------
+  // ---- Events ----
   function handleTabClick(key) {
-    currentTab = key;
+    writeTab(key);
     renderAll();
   }
 
@@ -220,34 +224,31 @@
     if (idx === -1) return;
 
     if (e.key === 'ArrowRight') {
-      const next = document.getElementById(order[(idx + 1) % order.length]);
-      next?.focus();
+      document.getElementById(order[(idx + 1) % order.length])?.focus();
       e.preventDefault();
     } else if (e.key === 'ArrowLeft') {
-      const prev = document.getElementById(order[(idx - 1 + order.length) % order.length]);
-      prev?.focus();
+      document.getElementById(order[(idx - 1 + order.length) % order.length])?.focus();
       e.preventDefault();
     } else if (e.key === 'Enter' || e.key === ' ') {
-      if (document.activeElement?.id === 'tabAll') handleTabClick('all');
-      if (document.activeElement?.id === 'tabRecent') handleTabClick('recent');
-      if (document.activeElement?.id === 'tabFavs') handleTabClick('favorites');
+      const id = document.activeElement?.id;
+      if (id === 'tabAll') handleTabClick('all');
+      if (id === 'tabRecent') handleTabClick('recent');
+      if (id === 'tabFavs') handleTabClick('favorites');
       e.preventDefault();
     }
   }
 
-  // Optional: Reset Demo clears movies and refreshes UI
   function onResetDemo() {
     localStorage.removeItem(MOVIES_KEY);
+    writeTab('all');       // return to All
     document.dispatchEvent(new CustomEvent('xsf:movies-updated'));
   }
 
-  // Listen to Step-3/4/5 events (saving, deleting, etc.)
+  // Listen to add/update events fired by modal code
   document.addEventListener('xsf:movie-added', renderAll);
   document.addEventListener('xsf:movies-updated', renderAll);
 
-  // ----------
-  // Init
-  // ----------
+  // ---- Init ----
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('tabAll')?.addEventListener('click', () => handleTabClick('all'));
     document.getElementById('tabRecent')?.addEventListener('click', () => handleTabClick('recent'));
@@ -261,5 +262,17 @@
     document.getElementById('resetDemo')?.addEventListener('click', onResetDemo);
 
     renderAll();
+  });
+
+  // ---- Tiny test API for quick QA ----
+  window.xsf = Object.freeze({
+    getMovies: () => readMovies(),
+    addMovie: (title, posterUrl = '') => {
+      const movies = readMovies();
+      movies.push(normalizeMovie({ title, posterUrl, favorite: false, addedAt: nowTs() }));
+      writeMovies(movies);
+    },
+    clear: () => onResetDemo(),
+    setTab: (t) => handleTabClick(t),
   });
 })();
