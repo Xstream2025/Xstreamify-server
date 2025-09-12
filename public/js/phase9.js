@@ -1,332 +1,132 @@
-(() => {
-  // ===== Keys =====
-  const LS_MOVIES = 'xsf_movies_v1';
-  const LS_TAB    = 'xsf_tab_v1';
-  const LS_SEARCH = 'xsf_search_v1';
-  const LS_SORT   = 'xsf_sort_v1';
+/* Phase 9 — single storage key + auto-seed 12 + resilient posters */
 
-  // ===== State =====
-  /** @type {{id:string,title:string,posterUrl:string,favorite:boolean,addedAt:number}[]} */
-  let movies = loadMovies();
-  let activeTab = loadStr(LS_TAB) || 'all';       // 'all' | 'recent' | 'favs'
-  let searchVal = loadStr(LS_SEARCH) || '';
-  let sortVal   = loadStr(LS_SORT) || 'az';
+const LS_KEY  = "xsf_vault_v1";   // single source of truth
+const FAV_KEY = "xsf_favs_v1";
 
-  // If totally empty, seed two so you immediately see cards
-  if (!movies.length) {
-    movies = [
-      m('Test Movie 1', './img/placeholder-2x3.png'),
-      m('Test Movie 2', './img/placeholder-2x3.png'),
-    ];
-    saveMovies(movies);
-  }
+const $ = s => document.querySelector(s);
 
-  // ===== DOM =====
-  const el = (id) => document.getElementById(id);
-  const grid        = el('grid');
-  const emptyState  = el('emptyState');
+/* ------- storage helpers ------- */
+function loadVault() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }
+  catch { return []; }
+}
+function saveVault(v)  { localStorage.setItem(LS_KEY, JSON.stringify(v)); }
+function loadFavs()    { return new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]")); }
+function saveFavs(s)   { localStorage.setItem(FAV_KEY, JSON.stringify([...s])); }
 
-  const searchInput = el('search');
-  const tabAll      = el('tabAll');
-  const tabRecent   = el('tabRecent');
-  const tabFavs     = el('tabFavs');
-  const sortSel     = el('sort');
-  const btnImport   = el('btnImport');
-  const btnExport   = el('btnExport');
-  const btnAdd      = el('btnAdd');
+/* ------- fallback poster ------- */
+function fallbackDataURL(title) {
+  const t = encodeURIComponent(title || "No Poster");
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='900'>
+    <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0' stop-color='#111'/><stop offset='1' stop-color='#222'/>
+    </linearGradient></defs>
+    <rect width='100%' height='100%' fill='url(#g)'/>
+    <text x='50%' y='50%' text-anchor='middle' fill='#e3e3e3'
+          font-family='Segoe UI, Roboto, sans-serif' font-size='42'>${t}</text>
+  </svg>`;
+  return "data:image/svg+xml;charset=utf-8," + svg;
+}
+function posterImg(src, title) {
+  const img = document.createElement("img");
+  img.alt = title || "Poster";
+  img.loading = "lazy";
+  img.decoding = "async";
+  img.src = src || fallbackDataURL(title);
+  img.onerror = () => { img.onerror = null; img.src = fallbackDataURL(title); };
+  return img;
+}
 
-  const bulkBar   = el('bulkBar');
-  const bulkFav   = el('bulkFav');
-  const bulkUnfav = el('bulkUnfav');
-  const bulkDel   = el('bulkDel');
+/* ------- ensure exactly 12 exist ------- */
+function ensureSeed12() {
+  let list = loadVault();
+  if (Array.isArray(list) && list.length >= 12) return;
 
-  // Modal
-  const modal       = el('modal');
-  const modalTitle  = el('modalTitle');
-  const mTitle      = el('mTitle');
-  const mPoster     = el('mPoster');
-  const modalCancel = el('modalCancel');
-  const modalSave   = el('modalSave');
+  const now = Date.now();
+  list = [
+    {id:"braveheart-1995",title:"Braveheart",poster:"https://image.tmdb.org/t/p/w500/or1gBugydmjToAEq7OZY0owwFk.jpg",addedAt:now-12*864e5},
+    {id:"inception-2010",title:"Inception",poster:"https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",addedAt:now-11*864e5},
+    {id:"matrix-1999",title:"The Matrix",poster:"https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",addedAt:now-10*864e5},
+    {id:"interstellar-2014",title:"Interstellar",poster:"https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",addedAt:now-9*864e5},
+    {id:"dark-knight-2008",title:"The Dark Knight",poster:"https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg",addedAt:now-8*864e5},
+    {id:"gladiator-2000",title:"Gladiator",poster:"https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg",addedAt:now-7*864e5},
+    {id:"mad-max-fury-road-2015",title:"Mad Max: Fury Road",poster:"https://image.tmdb.org/t/p/w500/8tZYtuWezp8JbcsvHYO0O46tFbo.jpg",addedAt:now-6*864e5},
+    {id:"blade-runner-2049-2017",title:"Blade Runner 2049",poster:"https://image.tmdb.org/t/p/w500/aMpyrCizvSdc0UIMblJ1srVgAEF.jpg",addedAt:now-5*864e5},
+    {id:"godfather-1972",title:"The Godfather",poster:"https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",addedAt:now-4*864e5},
+    {id:"pulp-fiction-1994",title:"Pulp Fiction",poster:"https://image.tmdb.org/t/p/w500/dM2w364MScsjFf8pfMbA0UeWRrR.jpg",addedAt:now-3*864e5},
+    {id:"shawshank-1994",title:"The Shawshank Redemption",poster:"https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg",addedAt:now-2*864e5},
+    {id:"lotr-fotr-2001",title:"The Lord of the Rings: The Fellowship of the Ring",poster:"https://image.tmdb.org/t/p/w500/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg",addedAt:now-1*864e5}
+  ];
+  saveVault(list);
+  if (!localStorage.getItem(FAV_KEY)) saveFavs(new Set());
+}
 
-  let editingId = null;  // null = adding
+/* ------- render ------- */
+function render(list = loadVault()) {
+  const grid = document.getElementById("grid");
+  const empty = document.getElementById("emptyState");
+  grid.innerHTML = "";
+  const favs = loadFavs();
 
-  // ===== Init Controls =====
-  searchInput.value = searchVal;
-  sortSel.value = sortVal;
-  syncTabsUI();
+  list.forEach(item => {
+    const card = document.createElement("article");
+    card.className = "bg-neutral-900 rounded-2xl overflow-hidden shadow-lg";
 
-  searchInput.addEventListener('input', () => {
-    searchVal = searchInput.value.trim();
-    saveStr(LS_SEARCH, searchVal);
-    render();
-  });
+    const poster = document.createElement("div");
+    poster.style.height = "300px";
+    poster.style.background = "#0a0a0a";
+    poster.appendChild(posterImg(item.poster, item.title));
 
-  tabAll.addEventListener('click', () => { activeTab = 'all';    saveStr(LS_TAB, activeTab); syncTabsUI(); render(); });
-  tabRecent.addEventListener('click', () => { activeTab = 'recent'; saveStr(LS_TAB, activeTab); syncTabsUI(); render(); });
-  tabFavs.addEventListener('click', () => { activeTab = 'favs';   saveStr(LS_TAB, activeTab); syncTabsUI(); render(); });
+    const footer = document.createElement("div");
+    footer.className = "px-4 py-3 flex items-center justify-between";
+    const title = document.createElement("div");
+    title.className = "text-neutral-100";
+    title.textContent = item.title;
 
-  sortSel.addEventListener('change', () => {
-    sortVal = sortSel.value;
-    saveStr(LS_SORT, sortVal);
-    render();
-  });
-
-  btnAdd.addEventListener('click', () => {
-    editingId = null;
-    modalTitle.textContent = 'Add Movie';
-    mTitle.value = '';
-    mPoster.value = './img/placeholder-2x3.png';
-    showModal(true);
-  });
-
-  btnExport.addEventListener('click', () => {
-    const data = JSON.stringify(movies, null, 2);
-    const blob = new Blob([data], {type: 'application/json'});
-    const a = document.createElement('a');
-    const ts = fmtTimestamp(new Date());
-    a.href = URL.createObjectURL(blob);
-    a.download = `xstreamify-movies-${ts}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  });
-
-  btnImport.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json';
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      try {
-        const text = await file.text();
-        const arr = JSON.parse(text);
-        if (!Array.isArray(arr)) throw new Error('JSON is not an array');
-
-        let map = new Map(movies.map(x => [x.id, x]));
-        for (const it of arr) {
-          const n = normalize(it);
-          if (!n) continue;
-          // dedupe by id; else by lower-title
-          let replaced = false;
-          if (n.id && map.has(n.id)) { map.set(n.id, n); replaced = true; }
-          if (!replaced) {
-            const byTitleKey = keyByTitle(n.title);
-            const exist = [...map.values()].find(v => keyByTitle(v.title) === byTitleKey);
-            if (exist) map.set(exist.id, {...n, id: exist.id});
-            else map.set(n.id, n);
-          }
-        }
-        movies = [...map.values()];
-        saveMovies(movies);
-        alert('Import complete.');
-        render();
-      } catch (e) {
-        console.error(e);
-        alert('Import failed: ' + (e && e.message ? e.message : e));
-      }
+    const actions = document.createElement("div");
+    actions.className = "flex gap-2";
+    const favBtn = document.createElement("button");
+    favBtn.className = "px-2 py-1 rounded bg-neutral-800";
+    favBtn.textContent = favs.has(item.id) ? "♥" : "♡";
+    favBtn.onclick = () => {
+      const s = loadFavs();
+      if (s.has(item.id)) s.delete(item.id); else s.add(item.id);
+      saveFavs(s); render(list);
     };
-    input.click();
+    const delBtn = document.createElement("button");
+    delBtn.className = "px-2 py-1 rounded bg-neutral-800";
+    delBtn.textContent = "Delete";
+    delBtn.onclick = () => {
+      const v = loadVault().filter(x => x.id !== item.id);
+      saveVault(v); render(v);
+    };
+    actions.append(favBtn, delBtn);
+
+    footer.append(title, actions);
+    card.append(poster, footer);
+    grid.appendChild(card);
   });
 
-  modalCancel.addEventListener('click', () => showModal(false));
-  modalSave.addEventListener('click', () => {
-    const title = mTitle.value.trim();
-    const posterUrl = mPoster.value.trim() || './img/placeholder-2x3.png';
-    if (!title) { alert('Title is required'); return; }
+  empty.classList.toggle("hidden", list.length > 0);
+}
 
-    if (editingId) {
-      movies = movies.map(it => it.id === editingId ? {...it, title, posterUrl} : it);
-    } else {
-      movies = [...movies, m(title, posterUrl)];
-    }
-    saveMovies(movies);
-    showModal(false);
-    render();
-  });
+/* ------- filters ------- */
+function applyFilters() {
+  let list = loadVault();
+  const q = (document.getElementById("search")?.value || "").trim().toLowerCase();
+  if (q) list = list.filter(m => m.title.toLowerCase().includes(q));
+  render(list);
+}
 
-  bulkFav.addEventListener('click',   () => bulkMark(true));
-  bulkUnfav.addEventListener('click', () => bulkMark(false));
-  bulkDel.addEventListener('click',   () => bulkDelete());
-
-  // ===== Render =====
+/* ------- init ------- */
+function init() {
+  ensureSeed12();      // guarantees 12 exist in LS_KEY
   render();
-
-  function render() {
-    const filtered = movies
-      .filter(byTab)
-      .filter(it => it.title.toLowerCase().includes(searchVal.toLowerCase()));
-
-    filtered.sort(sorter(sortVal));
-
-    grid.innerHTML = '';
-    if (!filtered.length) {
-      emptyState.classList.remove('hidden');
-      bulkBar.classList.add('hidden');
-      return;
-    }
-    emptyState.classList.add('hidden');
-
-    for (const it of filtered) {
-      const card = document.createElement('div');
-      card.className = 'card relative bg-neutral-900 rounded p-2';
-
-      card.innerHTML = `
-        <img src="${escapeHtml(it.posterUrl)}" alt="Poster" onerror="this.src='./img/placeholder-2x3.png'"/>
-        <div class="p-2 text-sm">${escapeHtml(it.title)}</div>
-        <button class="delete-btn absolute top-1 left-1 bg-red-600 px-2 rounded" title="Delete">✕</button>
-        <button class="fav-btn absolute top-1 right-1 bg-red-600 px-2 rounded" title="Favorite">${it.favorite ? '♥' : '♡'}</button>
-        <button class="edit-btn absolute bottom-1 right-1 bg-red-600 px-2 rounded" title="Edit">✎</button>
-        <input class="sel-box absolute bottom-1 left-1 w-4 h-4" type="checkbox"/>
-      `;
-
-      // controls
-      card.querySelector('.delete-btn').addEventListener('click', () => {
-        if (!confirm('Delete this movie?')) return;
-        movies = movies.filter(x => x.id !== it.id);
-        saveMovies(movies);
-        render();
-      });
-
-      card.querySelector('.fav-btn').addEventListener('click', (ev) => {
-        movies = movies.map(x => x.id === it.id ? {...x, favorite: !x.favorite} : x);
-        saveMovies(movies);
-        (ev.currentTarget).textContent = (it.favorite ? '♡' : '♥');
-        render();
-      });
-
-      card.querySelector('.edit-btn').addEventListener('click', () => {
-        editingId = it.id;
-        modalTitle.textContent = 'Edit Movie';
-        mTitle.value = it.title;
-        mPoster.value = it.posterUrl || './img/placeholder-2x3.png';
-        showModal(true);
-      });
-
-      card.querySelector('.sel-box').addEventListener('change', updateBulkBar);
-
-      grid.appendChild(card);
-    }
-
-    updateBulkBar();
-  }
-
-  function updateBulkBar() {
-    const anyChecked = grid.querySelectorAll('.sel-box:checked').length > 0;
-    if (anyChecked) bulkBar.classList.remove('hidden');
-    else bulkBar.classList.add('hidden');
-  }
-
-  function bulkMark(val) {
-    const ids = selectedIds();
-    if (!ids.length) return;
-    movies = movies.map(x => ids.includes(x.id) ? {...x, favorite: val} : x);
-    saveMovies(movies);
-    render();
-  }
-
-  function bulkDelete() {
-    const ids = selectedIds();
-    if (!ids.length) return;
-    if (!confirm(`Delete ${ids.length} selected?`)) return;
-    movies = movies.filter(x => !ids.includes(x.id));
-    saveMovies(movies);
-    render();
-  }
-
-  function selectedIds() {
-    const ids = [];
-    const cards = grid.querySelectorAll('.card');
-    cards.forEach((card, idx) => {
-      const cb = card.querySelector('.sel-box');
-      if (cb.checked) {
-        // find filtered item at same render index
-        const rendered = movies.filter(byTab)
-          .filter(it => it.title.toLowerCase().includes(searchVal.toLowerCase()))
-          .sort(sorter(sortVal));
-        if (rendered[idx]) ids.push(rendered[idx].id);
-      }
-    });
-    return ids;
-  }
-
-  // ===== Helpers =====
-  function byTab(it) {
-    if (activeTab === 'favs')   return it.favorite;
-    if (activeTab === 'recent') {
-      // last 7 days considered "recent"
-      const weekAgo = Date.now() - 7*24*60*60*1000;
-      return it.addedAt >= weekAgo;
-    }
-    return true;
-  }
-
-  function sorter(s) {
-    if (s === 'za')  return (a,b) => cmp(b.title, a.title);
-    if (s === 'fav') return (a,b) => (b.favorite - a.favorite) || cmp(a.title,b.title);
-    return (a,b) => cmp(a.title, b.title); // az
-  }
-
-  function cmp(a,b) { return a.toLowerCase().localeCompare(b.toLowerCase(), undefined, {sensitivity:'base'}); }
-
-  function m(title, posterUrl) {
-    return {
-      id: genId(),
-      title,
-      posterUrl,
-      favorite: false,
-      addedAt: Date.now()
-    };
-  }
-
-  function genId() {
-    return 'm_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-  }
-
-  function saveMovies(arr) { localStorage.setItem(LS_MOVIES, JSON.stringify(arr)); }
-  function loadMovies()    {
-    try { return JSON.parse(localStorage.getItem(LS_MOVIES)) || []; }
-    catch { return []; }
-  }
-  function saveStr(k,v){ localStorage.setItem(k, v); }
-  function loadStr(k){ return localStorage.getItem(k); }
-
-  function showModal(show) {
-    if (show) modal.classList.remove('hidden');
-    else      modal.classList.add('hidden');
-  }
-
-  function keyByTitle(t){ return (t||'').trim().toLowerCase(); }
-
-  function normalize(obj) {
-    if (!obj || typeof obj !== 'object') return null;
-    const title = (obj.title || '').toString().trim();
-    if (!title) return null;
-    return {
-      id: (obj.id && obj.id.toString()) || genId(),
-      title,
-      posterUrl: (obj.posterUrl || './img/placeholder-2x3.png').toString(),
-      favorite: !!obj.favorite,
-      addedAt: Number(obj.addedAt) || Date.now()
-    };
-  }
-
-  function fmtTimestamp(d) {
-    const pad = n => n.toString().padStart(2,'0');
-    return d.getFullYear().toString()
-      + pad(d.getMonth()+1) + pad(d.getDate())
-      + '-' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
-  }
-
-  function escapeHtml(s=''){
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  function syncTabsUI() {
-    const on = el => { el.classList.add('bg-red-600'); el.classList.remove('bg-neutral-800'); };
-    const off = el => { el.classList.remove('bg-red-600'); el.classList.add('bg-neutral-800'); };
-    if (activeTab === 'all')    { on(tabAll);    off(tabRecent); off(tabFavs); }
-    if (activeTab === 'recent') { on(tabRecent); off(tabAll);   off(tabFavs); }
-    if (activeTab === 'favs')   { on(tabFavs);   off(tabAll);   off(tabRecent); }
-  }
-})();
+  document.getElementById("search")?.addEventListener("input", applyFilters);
+  document.getElementById("tabAll")?.addEventListener("click", applyFilters);
+  document.getElementById("tabFav")?.addEventListener("click", () => {
+    const favs = loadFavs();
+    render(loadVault().filter(m => favs.has(m.id)));
+  });
+}
+document.addEventListener("DOMContentLoaded", init);

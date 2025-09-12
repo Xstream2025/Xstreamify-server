@@ -94,6 +94,37 @@
   </div>
 
   <!-- JS (cache-busted) -->
+   <!-- Force-seed vault to 12 movies if fewer are present -->
+<script>
+(function () {
+  try {
+    const movies = [
+      {id:"braveheart-1995",title:"Braveheart",poster:"https://image.tmdb.org/t/p/w500/or1gBugydmjToAEq7OZY0owwFk.jpg",addedAt:Date.now()-12*864e5},
+      {id:"inception-2010",title:"Inception",poster:"https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",addedAt:Date.now()-11*864e5},
+      {id:"matrix-1999",title:"The Matrix",poster:"https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",addedAt:Date.now()-10*864e5},
+      {id:"interstellar-2014",title:"Interstellar",poster:"https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",addedAt:Date.now()-9*864e5},
+      {id:"dark-knight-2008",title:"The Dark Knight",poster:"https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg",addedAt:Date.now()-8*864e5},
+      {id:"gladiator-2000",title:"Gladiator",poster:"https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg",addedAt:Date.now()-7*864e5},
+      {id:"mad-max-fury-road-2015",title:"Mad Max: Fury Road",poster:"https://image.tmdb.org/t/p/w500/8tZYtuWezp8JbcsvHYO0O46tFbo.jpg",addedAt:Date.now()-6*864e5},
+      {id:"blade-runner-2049-2017",title:"Blade Runner 2049",poster:"https://image.tmdb.org/t/p/w500/aMpyrCizvSdc0UIMblJ1srVgAEF.jpg",addedAt:Date.now()-5*864e5},
+      {id:"godfather-1972",title:"The Godfather",poster:"https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",addedAt:Date.now()-4*864e5},
+      {id:"pulp-fiction-1994",title:"Pulp Fiction",poster:"https://image.tmdb.org/t/p/w500/dM2w364MScsjFf8pfMbA0UeWRrR.jpg",addedAt:Date.now()-3*864e5},
+      {id:"shawshank-1994",title:"The Shawshank Redemption",poster:"https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg",addedAt:Date.now()-2*864e5},
+      {id:"lotr-fotr-2001",title:"The Lord of the Rings: The Fellowship of the Ring",poster:"https://image.tmdb.org/t/p/w500/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg",addedAt:Date.now()-1*864e5}
+    ];
+
+    const keys = ["xsf_vault_v1","xsf_vault","vault","movies","xsf_movies","xsf_vault_v9"];
+    const len = k => { try { return (JSON.parse(localStorage.getItem(k))||[]).length; } catch { return 0; } };
+    const currentMax = Math.max(0, ...keys.map(len));
+
+    if (currentMax < 12) {
+      keys.forEach(k => localStorage.setItem(k, JSON.stringify(movies)));
+      localStorage.setItem("xsf_favs_v1","[]");
+    }
+  } catch {}
+})();
+</script>
+
   <script src="./js/phase9.js?v=R1"></script>
 </body>
 </html>
