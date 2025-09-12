@@ -1,8 +1,6 @@
-/* X-Streamify — Phase 10 Step 4 (Polish)
-   - Confirmations for deletes & import
-   - Disabled states + tidy focus rings
-   - Small hints & toasts
-   - Keyboard: "/" focuses search
+/* X-Streamify — Phase 10 Step 6 (Bulk select fix)
+   - Preserve multiple selections while in Select mode
+   - Show selection count on the Select button
 */
 
 (() => {
@@ -80,7 +78,6 @@
 
     // View filter
     if (view === "recent") {
-      // last 14 days
       const cutoff = Date.now() - 14 * 24 * 3600 * 1000;
       out = out.filter(m => m.addedAt >= cutoff);
     } else if (view === "favs") {
@@ -105,15 +102,13 @@
       case "title_desc": out.sort((a,b) => b.title.localeCompare(a.title)); break;
       case "year_asc": out.sort((a,b) => (a.year||0) - (b.year||0)); break;
       case "year_desc": out.sort((a,b) => (b.year||0) - (a.year||0)); break;
-      default: // added_desc
-        out.sort((a,b) => b.addedAt - a.addedAt);
+      default: out.sort((a,b) => b.addedAt - a.addedAt);
     }
     return out;
   }
 
   function posterSrc(m) {
     if (m.poster && m.poster.startsWith("http")) return m.poster;
-    // subtle fallback
     const initials = encodeURIComponent((m.title||"?").slice(0,1).toUpperCase());
     return `https://dummyimage.com/300x450/0a0a0a/ffffff.png&text=${initials}`;
   }
@@ -128,7 +123,10 @@
       card.className = "group relative rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950";
       card.setAttribute("data-id", m.id);
 
-      // Poster
+      if (selectedIds.has(m.id)) {
+        card.classList.add("ring-2", "ring-red-500");
+      }
+
       const img = document.createElement("img");
       img.src = posterSrc(m);
       img.alt = `${m.title} poster`;
@@ -136,7 +134,6 @@
       img.onerror = () => { img.src = posterSrc({title:m.title}); };
       card.appendChild(img);
 
-      // Overlay corner buttons (hover)
       const overlay = document.createElement("div");
       overlay.className = "pointer-events-none absolute inset-0 p-2 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity";
       overlay.innerHTML = `
@@ -153,7 +150,6 @@
       `;
       card.appendChild(overlay);
 
-      // Meta row
       const meta = document.createElement("div");
       meta.className = "px-2 py-2";
       meta.innerHTML = `
@@ -176,7 +172,9 @@
     const hasSel = selectedIds.size > 0;
     bulkFavBtn.disabled = !hasSel;
     bulkDeleteBtn.disabled = !hasSel;
-    bulkSelectBtn.textContent = bulkMode ? "Exit Select" : "Select";
+    bulkSelectBtn.textContent = bulkMode
+      ? (hasSel ? `Exit Select (${selectedIds.size})` : "Exit Select")
+      : "Select";
   }
 
   // ---------- Modal ----------
@@ -199,11 +197,8 @@
       movieForm.poster.value = movie.poster || "";
       movieForm.tags.value = (movie.tags || []).join(", ");
     }
-
-    // focus title
     setTimeout(() => movieForm.title.focus(), 0);
   }
-
   function closeModal() {
     modal.classList.add("hidden");
     document.body.classList.remove("overflow-hidden");
@@ -220,9 +215,7 @@
       fav: false,
       addedAt: Date.now(),
     });
-    save();
-    render();
-    showToast("Movie added.");
+    save(); render(); showToast("Movie added.");
   }
 
   function updateMovie(id, data) {
@@ -235,9 +228,7 @@
         poster: (data.poster || "").trim(),
         tags: data.tags ? data.tags.split(",").map(s => s.trim()).filter(Boolean) : [],
       };
-      save();
-      render();
-      showToast("Movie updated.");
+      save(); render(); showToast("Movie updated.");
     }
   }
 
@@ -247,22 +238,22 @@
     if (!confirmBox(`Delete${name} from your vault?`)) return;
     library = library.filter(m => m.id !== id);
     selectedIds.delete(id);
-    save();
-    render();
-    showToast("Movie deleted.");
+    save(); render(); showToast("Movie deleted.");
   }
 
   function toggleFav(id, quiet = false) {
     const m = library.find(x => x.id === id);
     if (!m) return;
     m.fav = !m.fav;
-    save();
-    render();
+    save(); render();
     if (!quiet) showToast(m.fav ? "Added to Favorites." : "Removed from Favorites.");
   }
 
   // ---------- Bulk ----------
   function setBulkMode(on) {
+    // Only clear selections when toggling the mode,
+    // not when repeatedly clicking "select" on cards.
+    if (on === bulkMode) return;
     bulkMode = on;
     selectedIds.clear();
     document.body.classList.toggle("select-mode", bulkMode);
@@ -281,9 +272,7 @@
     if (!confirmBox(`Delete ${fmtCount(selectedIds.size)} from your vault? This cannot be undone.`)) return;
     library = library.filter(m => !selectedIds.has(m.id));
     selectedIds.clear();
-    save();
-    render();
-    showToast("Deleted selected items.");
+    save(); render(); showToast("Deleted selected items.");
   }
 
   // ---------- Import / Export ----------
@@ -300,9 +289,7 @@
   function importJSON(file) {
     if (!file) return;
     const replacing = library.length > 0;
-    const msg = replacing
-      ? "Importing will REPLACE your current library. Continue?"
-      : "Import this library?";
+    const msg = replacing ? "Importing will REPLACE your current library. Continue?" : "Import this library?";
     if (!confirmBox(msg)) return;
 
     const reader = new FileReader();
@@ -310,7 +297,6 @@
       try {
         const data = JSON.parse(reader.result);
         if (!Array.isArray(data)) throw new Error("Invalid format");
-        // basic sanitize
         library = data.map(x => ({
           id: x.id || uid(),
           title: String(x.title || "").trim(),
@@ -320,9 +306,7 @@
           fav: !!x.fav,
           addedAt: x.addedAt ? Number(x.addedAt) : Date.now(),
         }));
-        save();
-        render();
-        showToast("Import complete.");
+        save(); render(); showToast("Import complete.");
       } catch (e) {
         alert("Import failed: " + e.message);
       }
@@ -347,34 +331,22 @@
   });
 
   // Search / Sort
-  searchInput.addEventListener("input", () => {
-    query = searchInput.value;
-    render();
-  });
-  sortSelect.addEventListener("change", () => {
-    sort = sortSelect.value;
-    render();
-  });
+  searchInput.addEventListener("input", () => { query = searchInput.value; render(); });
+  sortSelect.addEventListener("change", () => { sort = sortSelect.value; render(); });
 
   // Keyboard — focus search with "/"
   window.addEventListener("keydown", (e) => {
-    if (e.key === "/" && document.activeElement !== searchInput) {
-      e.preventDefault();
-      searchInput.focus();
-    }
+    if (e.key === "/" && document.activeElement !== searchInput) { e.preventDefault(); searchInput.focus(); }
   });
 
   // Add
   addBtn.addEventListener("click", () => openModal("add"));
   $("[data-close]", modal).addEventListener("click", closeModal);
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal();
-  });
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
   movieForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(movieForm).entries());
-    if (editingId) updateMovie(editingId, data);
-    else addMovie(data);
+    if (editingId) updateMovie(editingId, data); else addMovie(data);
     closeModal();
   });
 
@@ -394,12 +366,13 @@
       if (m) openModal("edit", m);
     }
     if (act === "select") {
-      setBulkMode(true);
+      // Enter select mode only once; keep existing selections.
+      if (!bulkMode) setBulkMode(true);
       if (selectedIds.has(id)) selectedIds.delete(id);
       else selectedIds.add(id);
-      // Visual selection ring
-      card.classList.toggle("ring-2");
-      card.classList.toggle("ring-red-500");
+      // Apply visual ring according to current state
+      card.classList.toggle("ring-2", selectedIds.has(id));
+      card.classList.toggle("ring-red-500", selectedIds.has(id));
       updateBulkButtons();
     }
   });
@@ -410,7 +383,7 @@
       setBulkMode(false);
     } else {
       setBulkMode(true);
-      showToast("Tap posters (☐) to select.");
+      showToast("Tap posters (☐) to select multiple.");
     }
   });
   bulkFavBtn.addEventListener("click", bulkFavorite);
@@ -421,7 +394,6 @@
   importFile.addEventListener("change", (e) => importJSON(e.target.files[0]));
 
   // ---------- First render ----------
-  // Default tab highlight
   tabBtns.forEach(b => b.classList.toggle("bg-neutral-800", b.dataset.tab === "all"));
   tabBtns.forEach(b => b.classList.toggle("border-neutral-600", b.dataset.tab === "all"));
   render();
