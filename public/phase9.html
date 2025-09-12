@@ -2,166 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>X-Streamify – Phase 10 (Step 4 · bulk fix)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>X-Streamify — Phase 10 Step 5</title>
+  <link rel="stylesheet" href="tailwind.css" />
 
-  <link href="tailwind.css" rel="stylesheet" />
-
-  <!-- Tiny blank favicon to avoid 404 -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>">
-
-  <!-- Pin control buttons exactly -->
   <style>
-    .fav-btn   { right:0.5rem !important; left:auto !important; top:0.5rem !important; }
-    .delete-btn{ left:0.5rem !important; right:auto !important; top:0.5rem !important; }
-    .edit-btn  { right:0.5rem !important; left:auto !important; bottom:0.5rem !important; top:auto !important; }
-    /* Bulk-select checkbox */
-    .sel-box   { position:absolute; left:0.5rem; bottom:0.5rem; z-index:10; transform:scale(1.05); }
+    /* Size knobs (change if you want) */
+    .card { height: 20rem; }
+    .card img { height: 10rem; width: 100%; object-fit: cover; }
+
+    /* Show corner controls only on hover */
+    .card .delete-btn,
+    .card .fav-btn,
+    .card .edit-btn,
+    .card .sel-box { opacity: 0; transition: opacity .18s ease; }
+    .card:hover .delete-btn,
+    .card:hover .fav-btn,
+    .card:hover .edit-btn,
+    .card:hover .sel-box { opacity: 1; }
   </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100">
-  <header class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
-    <h1 class="text-xl font-bold">X-Streamify</h1>
-    <nav class="space-x-4">
-      <a href="#featured" class="hover:text-red-500">Featured</a>
-      <a href="#library" class="hover:text-red-500">My Library</a>
-      <a href="#vault" class="hover:text-red-500">Your Vault</a>
-    </nav>
+
+<body class="bg-neutral-950 text-neutral-100">
+  <header class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-red-600 rounded grid place-items-center font-black text-xl">X</div>
+      <h1 class="text-xl font-semibold">Your Vault</h1>
+    </div>
+
+    <input id="search" type="text" placeholder="Search by title..."
+           class="bg-neutral-800 px-3 py-2 rounded focus:outline-none focus:ring focus:ring-red-600 w-72"/>
+
+    <div class="flex items-center gap-2">
+      <button id="tabAll"     class="px-4 py-2 rounded bg-red-600">All</button>
+      <button id="tabRecent"  class="px-4 py-2 rounded bg-neutral-800">Recently Added</button>
+      <button id="tabFavs"    class="px-4 py-2 rounded bg-neutral-800">Favorites</button>
+
+      <select id="sort" class="px-3 py-2 rounded bg-neutral-800">
+        <option value="az">Title A–Z</option>
+        <option value="za">Title Z–A</option>
+        <option value="fav">Favorites First</option>
+      </select>
+
+      <button id="btnImport" class="px-4 py-2 rounded bg-neutral-800">Import JSON</button>
+      <button id="btnExport" class="px-4 py-2 rounded bg-red-600">Export JSON</button>
+      <button id="btnAdd"    class="px-4 py-2 rounded bg-neutral-800">+ Add Movie</button>
+    </div>
   </header>
 
-  <main class="max-w-7xl mx-auto p-6">
-    <!-- Your Vault -->
-    <section id="vault" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between gap-4">
-        <h2 class="text-2xl sm:text-3xl font-bold text-zinc-100">Your Vault</h2>
-        <button
-          id="resetDemo"
-          class="rounded-xl border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-red-500 hover:text-red-500 active:scale-[0.98] transition">
-          Reset Demo
-        </button>
-      </div>
+  <main class="max-w-6xl mx-auto px-4 pb-24">
+    <div id="bulkBar" class="hidden mb-3 flex items-center gap-2">
+      <button id="bulkFav"    class="px-3 py-1 rounded bg-neutral-800">Favorite</button>
+      <button id="bulkUnfav"  class="px-3 py-1 rounded bg-neutral-800">Unfavorite</button>
+      <button id="bulkDel"    class="px-3 py-1 rounded bg-red-600">Delete</button>
+    </div>
 
-      <!-- Controls -->
-      <div class="mt-4 flex flex-col gap-3">
-        <!-- Search -->
-        <div class="w-full sm:max-w-md">
-          <label for="vaultSearch" class="sr-only">Search your vault</label>
-          <div class="relative">
-            <input
-              id="vaultSearch"
-              type="text"
-              placeholder="Search titles…"
-              class="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-10 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 outline-none focus:border-red-500"
-              autocomplete="off" />
-            <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">🔎</span>
-            <button
-              id="clearSearch"
-              type="button"
-              class="hidden absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800">
-              Clear
-            </button>
-          </div>
-        </div>
+    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8"></div>
 
-        <!-- Tabs + Sort + Select row -->
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <!-- Tabs -->
-          <div id="vaultTabs" role="tablist" aria-label="Vault filters" class="flex gap-2">
-            <button id="tabAll" role="tab" type="button" aria-selected="true"
-              class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
-              <span>All</span>
-              <span id="countAll" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
-            </button>
-            <button id="tabRecent" role="tab" type="button" aria-selected="false"
-              class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
-              <span>Recently Added</span>
-              <span id="countRecent" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
-            </button>
-            <button id="tabFavs" role="tab" type="button" aria-selected="false"
-              class="vault-tab rounded-full border px-4 py-2 text-sm font-medium border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] transition inline-flex items-center gap-2">
-              <span>Favorites</span>
-              <span id="countFavs" class="tab-badge rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">0</span>
-            </button>
-          </div>
-
-          <!-- Sort + Select -->
-          <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2">
-              <label for="vaultSort" class="text-sm text-zinc-400">Sort</label>
-              <select
-                id="vaultSort"
-                class="rounded-xl border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 focus:border-red-500 disabled:opacity-60">
-                <option value="title-az">Title A–Z</option>
-                <option value="title-za">Title Z–A</option>
-                <option value="recent-desc">Recently Added</option>
-                <option value="fav-first">Favorites First</option>
-              </select>
-            </div>
-
-            <button id="bulkToggle"
-              class="rounded-xl border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white active:scale-[0.98]">
-              Select
-            </button>
-          </div>
-        </div>
-
-        <!-- Bulk action bar (visible only in select mode) -->
-        <div id="bulkBar" class="hidden rounded-xl border border-zinc-800 bg-zinc-900/50 px-3 py-2 flex items-center justify-between">
-          <div class="text-sm text-zinc-300">
-            Selected: <span id="bulkCount" class="font-semibold">0</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button id="bulkFav" class="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white">Favorite</button>
-            <button id="bulkUnfav" class="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white">Unfavorite</button>
-            <button id="bulkDelete" class="rounded-lg border border-red-600 text-red-200 px-3 py-1.5 text-sm hover:bg-red-600/10">Delete</button>
-            <button id="bulkExit" class="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white">Exit</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Grid -->
-      <div id="vaultGrid" class="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4"></div>
-    </section>
+    <div id="emptyState" class="hidden p-8 text-center text-neutral-400">No movies found.</div>
   </main>
 
-  <!-- Edit Modal (same as Step 3) -->
-  <div id="editModal" class="hidden fixed inset-0 z-50">
-    <div class="absolute inset-0 bg-black/60"></div>
-    <div class="absolute inset-0 flex items-center justify-center p-6">
-      <div class="w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-950 shadow-xl">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
-          <h3 class="text-lg font-semibold">Edit Movie</h3>
-          <button id="editClose" class="rounded-lg px-2 py-1 text-zinc-300 hover:text-white hover:bg-zinc-800">✕</button>
+  <!-- Modal -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50">
+    <div class="max-w-md mx-auto mt-28 bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
+      <h2 id="modalTitle" class="text-lg font-semibold mb-3">Edit Movie</h2>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-sm opacity-80">Title</label>
+          <input id="mTitle" type="text"
+                 class="w-full mt-1 px-3 py-2 rounded bg-neutral-800 border border-neutral-700"/>
         </div>
-        <div class="max-h-[65vh] overflow-auto px-5 py-4 space-y-4">
-          <div>
-            <label for="editTitle" class="block text-sm text-zinc-400">Title</label>
-            <input id="editTitle" type="text" class="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 focus:border-red-500" placeholder="Movie title" />
-          </div>
-          <div>
-            <label for="editPosterUrl" class="block text-sm text-zinc-400">Poster URL</label>
-            <input id="editPosterUrl" type="text" class="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 focus:border-red-500" placeholder="https://…" />
-            <div class="mt-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-3">
-              <div class="text-xs text-zinc-400 mb-2">Preview</div>
-              <div class="aspect-[2/3] w-40 bg-zinc-900 rounded-lg overflow-hidden">
-                <img id="editPosterPreview" src="" alt="Poster preview" class="h-full w-full object-cover" />
-              </div>
-            </div>
-          </div>
-          <label class="inline-flex items-center gap-2 text-sm text-zinc-300">
-            <input id="editFavorite" type="checkbox" class="h-4 w-4 rounded border-zinc-600 bg-zinc-900" />
-            Mark as favorite
-          </label>
+
+        <div>
+          <label class="text-sm opacity-80">Poster URL</label>
+          <input id="mPoster" type="text"
+                 placeholder="./img/placeholder-2x3.png"
+                 class="w-full mt-1 px-3 py-2 rounded bg-neutral-800 border border-neutral-700"/>
         </div>
-        <div class="sticky bottom-0 bg-zinc-950 rounded-b-2xl px-5 py-4 border-t border-zinc-800 flex items-center justify-end gap-2">
-          <button id="editCancel" class="rounded-xl border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white">Cancel</button>
-          <button id="editSave" class="rounded-xl border border-red-600 bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500">Save</button>
-        </div>
+      </div>
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button id="modalCancel" class="px-3 py-2 rounded bg-neutral-800 border border-neutral-700 hover:border-neutral-600">
+          Cancel
+        </button>
+        <button id="modalSave" class="px-3 py-2 rounded bg-red-600 hover:bg-red-500">
+          Save
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- cache-bust to ensure browser loads this version -->
-  <script src="js/phase9.js?v=phase10-step4-bulk-fix2"></script>
+  <!-- JS (cache-busted) -->
+  <script src="./js/phase9.js?v=R1"></script>
 </body>
 </html>

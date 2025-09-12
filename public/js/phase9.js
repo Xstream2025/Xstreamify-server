@@ -1,428 +1,332 @@
-/* public/js/phase9.js
-   Phase 10 — Step 4: Bulk select + actions (with change-handler fix)
-   - Select mode toggle
-   - Checkboxes on cards when selecting
-   - Bulk Favorite / Unfavorite / Delete bar with live count
-   - Esc exits select mode
-   - Works with tabs + search + sort + edit + favorite + delete
-*/
 (() => {
-  const MOVIES_KEY = 'xsf_movies_v1';
-  const TAB_KEY    = 'xsf_tab_v1';
-  const SEARCH_KEY = 'xsf_search_v1';
-  const SORT_KEY   = 'xsf_sort_v1';
+  // ===== Keys =====
+  const LS_MOVIES = 'xsf_movies_v1';
+  const LS_TAB    = 'xsf_tab_v1';
+  const LS_SEARCH = 'xsf_search_v1';
+  const LS_SORT   = 'xsf_sort_v1';
 
-  // State
-  let currentTab = readTab();
-  let searchText = readSearch();
-  let sortKey    = readSort();
-  let editingId  = null;
+  // ===== State =====
+  /** @type {{id:string,title:string,posterUrl:string,favorite:boolean,addedAt:number}[]} */
+  let movies = loadMovies();
+  let activeTab = loadStr(LS_TAB) || 'all';       // 'all' | 'recent' | 'favs'
+  let searchVal = loadStr(LS_SEARCH) || '';
+  let sortVal   = loadStr(LS_SORT) || 'az';
 
-  // Bulk-select state (in-memory)
-  let selectMode = false;
-  const selectedIds = new Set();
+  // If totally empty, seed two so you immediately see cards
+  if (!movies.length) {
+    movies = [
+      m('Test Movie 1', './img/placeholder-2x3.png'),
+      m('Test Movie 2', './img/placeholder-2x3.png'),
+    ];
+    saveMovies(movies);
+  }
 
-  // ----- utils -----
-  const nowTs = () => Date.now();
-  const uid = () =>
-    (typeof crypto !== 'undefined' && crypto.randomUUID)
-      ? crypto.randomUUID()
-      : 'id_' + Math.random().toString(36).slice(2);
+  // ===== DOM =====
+  const el = (id) => document.getElementById(id);
+  const grid        = el('grid');
+  const emptyState  = el('emptyState');
 
-  function normalizeMovie(m) {
-    return {
-      id: m.id ?? uid(),
-      title: (m.title ?? '').trim(),
-      posterUrl: (m.posterUrl ?? '').trim(),
-      favorite: !!m.favorite,
-      addedAt: typeof m.addedAt === 'number' ? m.addedAt : nowTs(),
+  const searchInput = el('search');
+  const tabAll      = el('tabAll');
+  const tabRecent   = el('tabRecent');
+  const tabFavs     = el('tabFavs');
+  const sortSel     = el('sort');
+  const btnImport   = el('btnImport');
+  const btnExport   = el('btnExport');
+  const btnAdd      = el('btnAdd');
+
+  const bulkBar   = el('bulkBar');
+  const bulkFav   = el('bulkFav');
+  const bulkUnfav = el('bulkUnfav');
+  const bulkDel   = el('bulkDel');
+
+  // Modal
+  const modal       = el('modal');
+  const modalTitle  = el('modalTitle');
+  const mTitle      = el('mTitle');
+  const mPoster     = el('mPoster');
+  const modalCancel = el('modalCancel');
+  const modalSave   = el('modalSave');
+
+  let editingId = null;  // null = adding
+
+  // ===== Init Controls =====
+  searchInput.value = searchVal;
+  sortSel.value = sortVal;
+  syncTabsUI();
+
+  searchInput.addEventListener('input', () => {
+    searchVal = searchInput.value.trim();
+    saveStr(LS_SEARCH, searchVal);
+    render();
+  });
+
+  tabAll.addEventListener('click', () => { activeTab = 'all';    saveStr(LS_TAB, activeTab); syncTabsUI(); render(); });
+  tabRecent.addEventListener('click', () => { activeTab = 'recent'; saveStr(LS_TAB, activeTab); syncTabsUI(); render(); });
+  tabFavs.addEventListener('click', () => { activeTab = 'favs';   saveStr(LS_TAB, activeTab); syncTabsUI(); render(); });
+
+  sortSel.addEventListener('change', () => {
+    sortVal = sortSel.value;
+    saveStr(LS_SORT, sortVal);
+    render();
+  });
+
+  btnAdd.addEventListener('click', () => {
+    editingId = null;
+    modalTitle.textContent = 'Add Movie';
+    mTitle.value = '';
+    mPoster.value = './img/placeholder-2x3.png';
+    showModal(true);
+  });
+
+  btnExport.addEventListener('click', () => {
+    const data = JSON.stringify(movies, null, 2);
+    const blob = new Blob([data], {type: 'application/json'});
+    const a = document.createElement('a');
+    const ts = fmtTimestamp(new Date());
+    a.href = URL.createObjectURL(blob);
+    a.download = `xstreamify-movies-${ts}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+
+  btnImport.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const arr = JSON.parse(text);
+        if (!Array.isArray(arr)) throw new Error('JSON is not an array');
+
+        let map = new Map(movies.map(x => [x.id, x]));
+        for (const it of arr) {
+          const n = normalize(it);
+          if (!n) continue;
+          // dedupe by id; else by lower-title
+          let replaced = false;
+          if (n.id && map.has(n.id)) { map.set(n.id, n); replaced = true; }
+          if (!replaced) {
+            const byTitleKey = keyByTitle(n.title);
+            const exist = [...map.values()].find(v => keyByTitle(v.title) === byTitleKey);
+            if (exist) map.set(exist.id, {...n, id: exist.id});
+            else map.set(n.id, n);
+          }
+        }
+        movies = [...map.values()];
+        saveMovies(movies);
+        alert('Import complete.');
+        render();
+      } catch (e) {
+        console.error(e);
+        alert('Import failed: ' + (e && e.message ? e.message : e));
+      }
     };
-  }
-  function readMovies() {
-    try {
-      const raw = localStorage.getItem(MOVIES_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr.map(normalizeMovie) : [];
-    } catch { return []; }
-  }
-  function writeMovies(movies) {
-    localStorage.setItem(MOVIES_KEY, JSON.stringify(movies.map(normalizeMovie)));
-    document.dispatchEvent(new CustomEvent('xsf:movies-updated'));
+    input.click();
+  });
+
+  modalCancel.addEventListener('click', () => showModal(false));
+  modalSave.addEventListener('click', () => {
+    const title = mTitle.value.trim();
+    const posterUrl = mPoster.value.trim() || './img/placeholder-2x3.png';
+    if (!title) { alert('Title is required'); return; }
+
+    if (editingId) {
+      movies = movies.map(it => it.id === editingId ? {...it, title, posterUrl} : it);
+    } else {
+      movies = [...movies, m(title, posterUrl)];
+    }
+    saveMovies(movies);
+    showModal(false);
+    render();
+  });
+
+  bulkFav.addEventListener('click',   () => bulkMark(true));
+  bulkUnfav.addEventListener('click', () => bulkMark(false));
+  bulkDel.addEventListener('click',   () => bulkDelete());
+
+  // ===== Render =====
+  render();
+
+  function render() {
+    const filtered = movies
+      .filter(byTab)
+      .filter(it => it.title.toLowerCase().includes(searchVal.toLowerCase()));
+
+    filtered.sort(sorter(sortVal));
+
+    grid.innerHTML = '';
+    if (!filtered.length) {
+      emptyState.classList.remove('hidden');
+      bulkBar.classList.add('hidden');
+      return;
+    }
+    emptyState.classList.add('hidden');
+
+    for (const it of filtered) {
+      const card = document.createElement('div');
+      card.className = 'card relative bg-neutral-900 rounded p-2';
+
+      card.innerHTML = `
+        <img src="${escapeHtml(it.posterUrl)}" alt="Poster" onerror="this.src='./img/placeholder-2x3.png'"/>
+        <div class="p-2 text-sm">${escapeHtml(it.title)}</div>
+        <button class="delete-btn absolute top-1 left-1 bg-red-600 px-2 rounded" title="Delete">✕</button>
+        <button class="fav-btn absolute top-1 right-1 bg-red-600 px-2 rounded" title="Favorite">${it.favorite ? '♥' : '♡'}</button>
+        <button class="edit-btn absolute bottom-1 right-1 bg-red-600 px-2 rounded" title="Edit">✎</button>
+        <input class="sel-box absolute bottom-1 left-1 w-4 h-4" type="checkbox"/>
+      `;
+
+      // controls
+      card.querySelector('.delete-btn').addEventListener('click', () => {
+        if (!confirm('Delete this movie?')) return;
+        movies = movies.filter(x => x.id !== it.id);
+        saveMovies(movies);
+        render();
+      });
+
+      card.querySelector('.fav-btn').addEventListener('click', (ev) => {
+        movies = movies.map(x => x.id === it.id ? {...x, favorite: !x.favorite} : x);
+        saveMovies(movies);
+        (ev.currentTarget).textContent = (it.favorite ? '♡' : '♥');
+        render();
+      });
+
+      card.querySelector('.edit-btn').addEventListener('click', () => {
+        editingId = it.id;
+        modalTitle.textContent = 'Edit Movie';
+        mTitle.value = it.title;
+        mPoster.value = it.posterUrl || './img/placeholder-2x3.png';
+        showModal(true);
+      });
+
+      card.querySelector('.sel-box').addEventListener('change', updateBulkBar);
+
+      grid.appendChild(card);
+    }
+
+    updateBulkBar();
   }
 
-  function readTab() {
-    const t = localStorage.getItem(TAB_KEY);
-    return t === 'recent' || t === 'favorites' ? t : 'all';
-  }
-  function writeTab(tab) {
-    currentTab = tab;
-    localStorage.setItem(TAB_KEY, tab);
-    exitSelectMode(); // leave select mode on tab switch to keep things simple
+  function updateBulkBar() {
+    const anyChecked = grid.querySelectorAll('.sel-box:checked').length > 0;
+    if (anyChecked) bulkBar.classList.remove('hidden');
+    else bulkBar.classList.add('hidden');
   }
 
-  function readSearch() { return (localStorage.getItem(SEARCH_KEY) || '').trim(); }
-  function writeSearch(txt) {
-    searchText = (txt || '').trim();
-    localStorage.setItem(SEARCH_KEY, searchText);
+  function bulkMark(val) {
+    const ids = selectedIds();
+    if (!ids.length) return;
+    movies = movies.map(x => ids.includes(x.id) ? {...x, favorite: val} : x);
+    saveMovies(movies);
+    render();
   }
 
-  function readSort() {
-    const s = localStorage.getItem(SORT_KEY);
-    return ['title-az','title-za','recent-desc','fav-first'].includes(s) ? s : 'title-az';
-  }
-  function writeSort(s) {
-    sortKey = s;
-    localStorage.setItem(SORT_KEY, sortKey);
-  }
-
-  function setFavorite(id, value) {
-    const movies = readMovies();
-    const idx = movies.findIndex(m => m.id === id);
-    if (idx !== -1) { movies[idx].favorite = !!value; writeMovies(movies); }
-  }
-  function deleteMovie(id) { writeMovies(readMovies().filter(m => m.id !== id)); }
-
-  // Poster fallback
-  const FALLBACK_SVG =
-    'data:image/svg+xml;utf8,' +
-    encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1200">
-        <rect width="100%" height="100%" fill="#111"/>
-        <rect x="40" y="40" width="720" height="1120" fill="#1f2937" rx="24"/>
-        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-family="Arial, Helvetica, sans-serif" font-size="42">No Poster</text>
-      </svg>`
-    );
-  const posterSrc = (url) => (url && url.trim()) ? url.trim() : FALLBACK_SVG;
-
-  // ----- rendering helpers -----
-  function updateTabCounts() {
-    const movies = readMovies();
-    const all = movies.length;
-    const fav = movies.filter(m => m.favorite).length;
-    const elAll    = document.getElementById('countAll');
-    const elRecent = document.getElementById('countRecent');
-    const elFavs   = document.getElementById('countFavs');
-    if (elAll)    elAll.textContent    = String(all);
-    if (elRecent) elRecent.textContent = String(all);
-    if (elFavs)   elFavs.textContent   = String(fav);
+  function bulkDelete() {
+    const ids = selectedIds();
+    if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} selected?`)) return;
+    movies = movies.filter(x => !ids.includes(x.id));
+    saveMovies(movies);
+    render();
   }
 
-  function renderTabs() {
-    [['tabAll','all'],['tabRecent','recent'],['tabFavs','favorites']].forEach(([id,key])=>{
-      const el = document.getElementById(id); if (!el) return;
-      const active = currentTab === key;
-      el.setAttribute('aria-selected', String(active));
-      el.classList.toggle('bg-red-600', active);
-      el.classList.toggle('text-white', active);
-      el.classList.toggle('border-red-600', active);
-      el.classList.toggle('ring-2', active);
-      el.classList.toggle('ring-red-600/60', active);
-
-      const badge = el.querySelector('.tab-badge');
-      if (badge) {
-        badge.classList.toggle('border-zinc-700', !active);
-        badge.classList.toggle('border-red-300', active);
-        badge.classList.toggle('text-zinc-300', !active);
-        badge.classList.toggle('text-white', active);
-        badge.classList.toggle('bg-red-600/20', active);
+  function selectedIds() {
+    const ids = [];
+    const cards = grid.querySelectorAll('.card');
+    cards.forEach((card, idx) => {
+      const cb = card.querySelector('.sel-box');
+      if (cb.checked) {
+        // find filtered item at same render index
+        const rendered = movies.filter(byTab)
+          .filter(it => it.title.toLowerCase().includes(searchVal.toLowerCase()))
+          .sort(sorter(sortVal));
+        if (rendered[idx]) ids.push(rendered[idx].id);
       }
     });
+    return ids;
   }
 
-  function filterByTab(movies) {
-    if (currentTab === 'favorites') return movies.filter(m => m.favorite);
-    return movies; // 'all' and 'recent' include all
-  }
-
-  function effectiveSortKey() {
-    return currentTab === 'recent' ? 'recent-desc' : sortKey;
-  }
-  function renderSortUI() {
-    const sel = document.getElementById('vaultSort');
-    if (!sel) return;
-    sel.value = effectiveSortKey();
-    sel.disabled = currentTab === 'recent';
-  }
-
-  function applySort(list) {
-    const s = effectiveSortKey();
-    if (s === 'recent-desc') return [...list].sort((a,b)=>b.addedAt - a.addedAt);
-    if (s === 'title-za')    return [...list].sort((a,b)=>b.title.localeCompare(a.title, undefined, {sensitivity:'base'}));
-    if (s === 'fav-first')   return [...list].sort((a,b)=>(b.favorite - a.favorite) || (b.addedAt - a.addedAt));
-    return [...list].sort((a,b)=>a.title.localeCompare(b.title, undefined, {sensitivity:'base'})); // title-az
-  }
-
-  function applySearch(list) {
-    const q = (searchText || '').toLowerCase();
-    if (!q) return list;
-    return list.filter(m => (m.title || '').toLowerCase().includes(q));
-  }
-
-  function updateSearchUI() {
-    const input = document.getElementById('vaultSearch');
-    const clear = document.getElementById('clearSearch');
-    if (input) input.value = searchText;
-    if (clear) clear.classList.toggle('hidden', !searchText);
-  }
-
-  function updateBulkUI() {
-    const bar = document.getElementById('bulkBar');
-    const cnt = document.getElementById('bulkCount');
-    const toggle = document.getElementById('bulkToggle');
-    if (!bar || !cnt || !toggle) return;
-
-    cnt.textContent = String(selectedIds.size);
-    bar.classList.toggle('hidden', !selectMode);
-    toggle.textContent = selectMode ? 'Selecting…' : 'Select';
-  }
-
-  function renderGrid() {
-    const grid = document.getElementById('vaultGrid'); if (!grid) return;
-    const base = filterByTab(readMovies());
-    const searched = applySearch(base);
-    const sorted = applySort(searched);
-
-    if (!sorted.length) {
-      grid.innerHTML = `
-        <div class="col-span-full flex flex-col items-center justify-center py-16 text-center">
-          <div class="text-2xl font-semibold text-gray-300">Nothing here yet</div>
-          <div class="text-gray-400 mt-2">Add a movie or change your search/sort.</div>
-        </div>`;
-      return;
+  // ===== Helpers =====
+  function byTab(it) {
+    if (activeTab === 'favs')   return it.favorite;
+    if (activeTab === 'recent') {
+      // last 7 days considered "recent"
+      const weekAgo = Date.now() - 7*24*60*60*1000;
+      return it.addedAt >= weekAgo;
     }
-
-    grid.innerHTML = sorted.map(m => {
-      const selected = selectedIds.has(m.id);
-      return `
-        <div class="group relative rounded-2xl overflow-hidden bg-zinc-900/60 border ${selected ? 'ring-2 ring-red-500/60 border-red-700' : 'border-zinc-800'} shadow-sm">
-          <!-- ✕ on LEFT -->
-          <button type="button"
-            class="absolute top-2 left-2 z-10 inline-flex items-center justify-center h-9 w-9 rounded-xl bg-black/60 hover:bg-black/80 active:scale-[0.98] transition border border-zinc-700 delete-btn"
-            aria-label="Delete" data-id="${m.id}">
-            <span class="text-zinc-300 group-hover:text-white text-lg leading-none">✕</span>
-          </button>
-
-          <!-- ❤️ on RIGHT -->
-          <button type="button"
-            class="absolute top-2 right-2 z-10 inline-flex items-center justify-center h-9 w-9 rounded-xl bg-black/60 hover:bg-black/80 active:scale-[0.98] transition border border-zinc-700 fav-btn"
-            aria-label="Toggle favorite" aria-pressed="${m.favorite ? 'true' : 'false'}" data-id="${m.id}">
-            <span class="text-xl leading-none select-none">${m.favorite ? '❤️' : '🤍'}</span>
-          </button>
-
-          <!-- ✎ bottom-right -->
-          <button type="button"
-            class="absolute bottom-2 right-2 z-10 inline-flex items-center justify-center h-9 w-9 rounded-xl bg-black/60 hover:bg-black/80 active:scale-[0.98] transition border border-zinc-700 edit-btn"
-            aria-label="Edit" data-id="${m.id}">
-            <span class="text-lg leading-none text-zinc-300 group-hover:text-white">✎</span>
-          </button>
-
-          <!-- Bulk select checkbox (only visible in select mode) -->
-          ${selectMode ? `
-            <input type="checkbox" class="sel-box h-4 w-4 rounded border-zinc-600 bg-zinc-900" data-id="${m.id}" ${selected ? 'checked' : ''} />
-          ` : ''}
-
-          <div class="aspect-[2/3] w-full bg-zinc-950">
-            <img
-              src="${posterSrc(m.posterUrl)}"
-              alt="${m.title ? m.title.replace(/"/g,'&quot;') : 'Poster'}"
-              class="h-full w-full object-cover"
-              onerror="this.onerror=null; this.src='${FALLBACK_SVG}';" />
-          </div>
-
-          <div class="p-3 border-t border-zinc-800">
-            <div class="text-sm text-zinc-400">Added: ${new Date(m.addedAt).toLocaleDateString()}</div>
-            <div class="mt-1 text-base font-semibold text-zinc-100 truncate" title="${m.title || 'Untitled'}">${m.title || 'Untitled'}</div>
-          </div>
-        </div>
-      `;
-    }).join('');
+    return true;
   }
 
-  function renderAll() {
-    updateTabCounts();
-    renderTabs();
-    renderSortUI();
-    updateSearchUI();
-    updateBulkUI();
-    renderGrid();
+  function sorter(s) {
+    if (s === 'za')  return (a,b) => cmp(b.title, a.title);
+    if (s === 'fav') return (a,b) => (b.favorite - a.favorite) || cmp(a.title,b.title);
+    return (a,b) => cmp(a.title, b.title); // az
   }
 
-  // ----- Edit modal -----
-  function el(id){ return document.getElementById(id); }
-  function openEditModal(movie){
-    editingId = movie.id;
-    el('editTitle').value = movie.title || '';
-    el('editPosterUrl').value = movie.posterUrl || '';
-    el('editFavorite').checked = !!movie.favorite;
-    el('editPosterPreview').src = posterSrc(movie.posterUrl);
-    el('editModal').classList.remove('hidden');
-  }
-  function closeEditModal(){
-    editingId = null;
-    el('editModal').classList.add('hidden');
-  }
-  function onEditSave(){
-    if (!editingId) return closeEditModal();
-    const title = el('editTitle').value.trim();
-    const posterUrl = el('editPosterUrl').value.trim();
-    const favorite = !!el('editFavorite').checked;
-    const movies = readMovies();
-    const idx = movies.findIndex(m => m.id === editingId);
-    if (idx !== -1) {
-      movies[idx] = normalizeMovie({ ...movies[idx], title, posterUrl, favorite });
-      writeMovies(movies);
-    }
-    closeEditModal();
-  }
-  function onEditPosterInput(){
-    const v = el('editPosterUrl').value.trim();
-    el('editPosterPreview').src = posterSrc(v);
+  function cmp(a,b) { return a.toLowerCase().localeCompare(b.toLowerCase(), undefined, {sensitivity:'base'}); }
+
+  function m(title, posterUrl) {
+    return {
+      id: genId(),
+      title,
+      posterUrl,
+      favorite: false,
+      addedAt: Date.now()
+    };
   }
 
-  // ----- Select mode helpers -----
-  function enterSelectMode(){ selectMode = true; updateBulkUI(); renderGrid(); }
-  function exitSelectMode(){ selectMode = false; selectedIds.clear(); updateBulkUI(); renderGrid(); }
-
-  // ----- events -----
-  function handleTabClick(key){ writeTab(key); renderAll(); }
-
-  function onGridClick(e){
-    const del = e.target.closest('.delete-btn');
-    const fav = e.target.closest('.fav-btn');
-    const edt = e.target.closest('.edit-btn');
-
-    if (del){ deleteMovie(del.dataset.id); renderAll(); return; }
-    if (fav){
-      const id = fav.dataset.id, movies = readMovies(), item = movies.find(m=>m.id===id);
-      if (item){ setFavorite(id, !item.favorite); renderAll(); return; }
-    }
-    if (edt){
-      const id = edt.dataset.id, movies = readMovies(), item = movies.find(m=>m.id===id);
-      if (item){ openEditModal(item); }
-      return;
-    }
+  function genId() {
+    return 'm_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
   }
 
-  // *** NEW: handle checkbox state reliably ***
-  function onGridChange(e){
-    const target = e.target;
-    if (!target || !target.classList || !target.classList.contains('sel-box')) return;
-    const id = target.dataset.id;
-    if (!id) return;
-    if (target.checked) selectedIds.add(id);
-    else selectedIds.delete(id);
-    updateBulkUI();
-    renderGrid(); // reflect ring highlight immediately
+  function saveMovies(arr) { localStorage.setItem(LS_MOVIES, JSON.stringify(arr)); }
+  function loadMovies()    {
+    try { return JSON.parse(localStorage.getItem(LS_MOVIES)) || []; }
+    catch { return []; }
+  }
+  function saveStr(k,v){ localStorage.setItem(k, v); }
+  function loadStr(k){ return localStorage.getItem(k); }
+
+  function showModal(show) {
+    if (show) modal.classList.remove('hidden');
+    else      modal.classList.add('hidden');
   }
 
-  function onTabKeydown(e){
-    const order=['tabAll','tabRecent','tabFavs']; const idx=order.indexOf(document.activeElement?.id);
-    if (idx===-1) return;
-    if (e.key==='ArrowRight'){ document.getElementById(order[(idx+1)%order.length])?.focus(); e.preventDefault(); }
-    else if (e.key==='ArrowLeft'){ document.getElementById(order[(idx-1+order.length)%order.length])?.focus(); e.preventDefault(); }
-    else if (e.key==='Enter' || e.key===' '){
-      const id=document.activeElement?.id;
-      if (id==='tabAll') handleTabClick('all');
-      if (id==='tabRecent') handleTabClick('recent');
-      if (id==='tabFavs') handleTabClick('favorites');
-      e.preventDefault();
-    }
+  function keyByTitle(t){ return (t||'').trim().toLowerCase(); }
+
+  function normalize(obj) {
+    if (!obj || typeof obj !== 'object') return null;
+    const title = (obj.title || '').toString().trim();
+    if (!title) return null;
+    return {
+      id: (obj.id && obj.id.toString()) || genId(),
+      title,
+      posterUrl: (obj.posterUrl || './img/placeholder-2x3.png').toString(),
+      favorite: !!obj.favorite,
+      addedAt: Number(obj.addedAt) || Date.now()
+    };
   }
-  function onResetDemo(){ localStorage.removeItem(MOVIES_KEY); exitSelectMode(); writeTab('all'); document.dispatchEvent(new CustomEvent('xsf:movies-updated')); }
 
-  // Search events
-  function onSearchInput(e){ writeSearch(e.currentTarget.value || ''); renderGrid(); updateSearchUI(); }
-  function onSearchClear(){ writeSearch(''); renderAll(); el('vaultSearch')?.focus(); }
-  function onSearchKeydown(e){ if (e.key === 'Escape'){ onSearchClear(); } }
-
-  // Sort events
-  function onSortChange(e){ writeSort(e.currentTarget.value); renderGrid(); }
-
-  // Bulk events
-  function onBulkToggle(){ selectMode ? exitSelectMode() : enterSelectMode(); }
-  function onBulkFav(){
-    if (!selectedIds.size) return;
-    const movies = readMovies();
-    movies.forEach(m => { if (selectedIds.has(m.id)) m.favorite = true; });
-    writeMovies(movies);
+  function fmtTimestamp(d) {
+    const pad = n => n.toString().padStart(2,'0');
+    return d.getFullYear().toString()
+      + pad(d.getMonth()+1) + pad(d.getDate())
+      + '-' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
   }
-  function onBulkUnfav(){
-    if (!selectedIds.size) return;
-    const movies = readMovies();
-    movies.forEach(m => { if (selectedIds.has(m.id)) m.favorite = false; });
-    writeMovies(movies);
+
+  function escapeHtml(s=''){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
-  function onBulkDelete(){
-    if (!selectedIds.size) return;
-    if (!confirm(`Delete ${selectedIds.size} selected item(s)?`)) return;
-    const keep = readMovies().filter(m => !selectedIds.has(m.id));
-    writeMovies(keep);
-    exitSelectMode();
+
+  function syncTabsUI() {
+    const on = el => { el.classList.add('bg-red-600'); el.classList.remove('bg-neutral-800'); };
+    const off = el => { el.classList.remove('bg-red-600'); el.classList.add('bg-neutral-800'); };
+    if (activeTab === 'all')    { on(tabAll);    off(tabRecent); off(tabFavs); }
+    if (activeTab === 'recent') { on(tabRecent); off(tabAll);   off(tabFavs); }
+    if (activeTab === 'favs')   { on(tabFavs);   off(tabAll);   off(tabRecent); }
   }
-  function onBulkExit(){ exitSelectMode(); }
-
-  // external events
-  document.addEventListener('xsf:movie-added', renderAll);
-  document.addEventListener('xsf:movies-updated', renderAll);
-
-  // init
-  document.addEventListener('DOMContentLoaded', ()=>{
-    // tabs
-    document.getElementById('tabAll')?.addEventListener('click', ()=>handleTabClick('all'));
-    document.getElementById('tabRecent')?.addEventListener('click', ()=>handleTabClick('recent'));
-    document.getElementById('tabFavs')?.addEventListener('click', ()=>handleTabClick('favorites'));
-    document.getElementById('tabAll')?.addEventListener('keydown', onTabKeydown);
-    document.getElementById('tabRecent')?.addEventListener('keydown', onTabKeydown);
-    document.getElementById('tabFavs')?.addEventListener('keydown', onTabKeydown);
-
-    // grid: click + change
-    document.getElementById('vaultGrid')?.addEventListener('click', onGridClick);
-    document.getElementById('vaultGrid')?.addEventListener('change', onGridChange);
-
-    // reset
-    document.getElementById('resetDemo')?.addEventListener('click', onResetDemo);
-
-    // search
-    document.getElementById('vaultSearch')?.addEventListener('input', onSearchInput);
-    document.getElementById('vaultSearch')?.addEventListener('keydown', onSearchKeydown);
-    document.getElementById('clearSearch')?.addEventListener('click', onSearchClear);
-
-    // sort
-    document.getElementById('vaultSort')?.addEventListener('change', onSortChange);
-
-    // bulk
-    document.getElementById('bulkToggle')?.addEventListener('click', onBulkToggle);
-    document.getElementById('bulkFav')?.addEventListener('click', onBulkFav);
-    document.getElementById('bulkUnfav')?.addEventListener('click', onBulkUnfav);
-    document.getElementById('bulkDelete')?.addEventListener('click', onBulkDelete);
-    document.getElementById('bulkExit')?.addEventListener('click', onBulkExit);
-
-    // Esc exits select mode
-    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && selectMode) exitSelectMode(); });
-
-    // edit modal
-    document.getElementById('editSave')?.addEventListener('click', onEditSave);
-    document.getElementById('editCancel')?.addEventListener('click', closeEditModal);
-    document.getElementById('editClose')?.addEventListener('click', closeEditModal);
-    document.getElementById('editPosterUrl')?.addEventListener('input', onEditPosterInput);
-    document.getElementById('editModal')?.addEventListener('click', (e)=>{
-      if (e.target === e.currentTarget.firstElementChild) closeEditModal(); // backdrop
-    });
-
-    renderAll();
-  });
-
-  // QA helpers
-  window.xsf = Object.freeze({
-    getMovies: () => readMovies(),
-    addMovie: (title, posterUrl='') => {
-      const movies = readMovies();
-      movies.push(normalizeMovie({ title, posterUrl, favorite:false, addedAt: nowTs() }));
-      writeMovies(movies);
-    },
-    clear: () => onResetDemo(),
-    setTab: (t) => { writeTab(t); renderAll(); },
-    setSearch: (q='') => { writeSearch(q); renderAll(); },
-    setSort: (s='title-az') => { writeSort(s); renderAll(); },
-  });
 })();
